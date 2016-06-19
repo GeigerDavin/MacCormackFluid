@@ -146,6 +146,7 @@ int main()
 	shader.addShaderFromSourceFile(OpenGLShader::Vertex, "shader/cubeshader.vertexshader");
 	shader.addShaderFromSourceFile(OpenGLShader::Fragment, "shader/cubeshader.fragmentshader");
 	shader.link();
+	shader.bind();
 
 
 	bufferColor.create();
