@@ -1,0 +1,6 @@
+[submodule "MacCormackFluid/glew"]
+	path = MacCormackFluid/glew
+	url = https://github.com/nigels-com/glew.git
+[submodule "MacCormackFluid/glfw"]
+	path = MacCormackFluid/glfw
+	url = https://github.com/glfw/glfw.git
