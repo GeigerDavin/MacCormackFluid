@@ -18,7 +18,6 @@ int main()
 {
 	GLFWwindow* mainWindow;
 	cudaError_t cudaStatus;
-	// Initialize GLFW
 	if (!glfwInit())
 	{
 		cerr << "Failind to Initialize GLFW. Error=" << glGetError() << endl;
@@ -33,15 +32,22 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
+	// Register Main Window
+	glfwMakeContextCurrent(mainWindow);
+
+	glewExperimental = GL_FALSE;
+	if (glewInit() != GLEW_OK)
+	{
+		cerr << "Failind to Initialize GLEW. Error=" << glGetError() << endl;
+		return -1;
+	}
+
 	//Init Cuda Device
 	cudaStatus = cudaSetDevice(0);
 	if (cudaStatus != cudaSuccess) {
 		cerr << "cudaSetDevice failed. Error: " << cudaGetErrorString(cudaGetLastError()) << endl;
 		return -1;
 	}
-
-	// Register Main Window
-	glfwMakeContextCurrent(mainWindow);
 
 	GLuint positionsVBO;
 	struct cudaGraphicsResource* positionsVBO_CUDA;
