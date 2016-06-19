@@ -1,8 +1,12 @@
+#include "StdAfx.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include "OpenGLInterop.hpp"
 #include "Auxiliary.hpp"
+#include "OpenGLBuffer.hpp"
+#include "OpenGLShaderProgram.hpp"
+#include "OpenGLVertexArrayObject.hpp"
 
 #define WINDOW_HEIGT (640)
 #define WINDOW_WIDTH (480)

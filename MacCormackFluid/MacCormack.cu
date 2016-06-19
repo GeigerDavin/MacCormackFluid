@@ -1,11 +1,8 @@
+#include "StdAfx.hpp"
 #include "Auxiliary.hpp"
 #include "Allocator.hpp"
 #include "KernelTextures.hpp"
 #include "VectorTypes.hpp"
-
-#include <cuda.h>
-#include <cuda_device_runtime_api.h>
-#include <device_launch_parameters.h>
 
 __global__ void advect3D(unsigned int size) {
     uint3 tid;

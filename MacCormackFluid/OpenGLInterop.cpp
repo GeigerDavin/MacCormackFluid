@@ -1,3 +1,4 @@
+#include "StdAfx.hpp"
 #include "OpenGLInterop.hpp"
 #include "Auxiliary.hpp"
 

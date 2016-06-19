@@ -1,3 +1,4 @@
+#include "StdAfx.hpp"
 #include "Auxiliary.hpp"
 #include <iostream>
 #include <math.h>

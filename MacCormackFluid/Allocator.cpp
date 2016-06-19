@@ -1,3 +1,4 @@
+#include "StdAfx.hpp"
 #include "Allocator.hpp"
 #include "Auxiliary.hpp"
 

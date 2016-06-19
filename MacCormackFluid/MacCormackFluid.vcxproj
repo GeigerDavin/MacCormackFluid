@@ -22,15 +22,24 @@
     <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="Auxiliary.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OpenGLBuffer.cpp" />
     <ClCompile Include="OpenGLInterop.cpp" />
+    <ClCompile Include="OpenGLShaderProgram.cpp" />
+    <ClCompile Include="OpenGLVertexArrayObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Allocator.hpp" />
     <ClInclude Include="Auxiliary.hpp" />
+    <ClInclude Include="Common.hpp" />
     <ClInclude Include="ConstantMemory.hpp" />
     <ClInclude Include="KernelTextures.hpp" />
     <ClInclude Include="MacCormack.hpp" />
+    <ClInclude Include="OpenGLBuffer.hpp" />
     <ClInclude Include="OpenGLInterop.hpp" />
+    <ClInclude Include="OpenGLShaderProgram.hpp" />
+    <ClInclude Include="OpenGLVertexArrayObject.hpp" />
+    <ClInclude Include="ResourceGuard.hpp" />
+    <ClInclude Include="StdAfx.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Vector.hpp" />
     <ClInclude Include="VectorTypes.hpp" />
@@ -91,20 +100,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
+    <IncludePath>../ThirdParty/GLM;../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
     <LibraryPath>../ThirdParty/GLFW/lib32;../ThirdParty/GLEW/lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
+    <IncludePath>../ThirdParty/GLM;../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
     <LibraryPath>../ThirdParty/GLEW/lib64;../ThirdParty/GLFW/lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
+    <IncludePath>../ThirdParty/GLM;../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
     <LibraryPath>../ThirdParty/GLFW/lib32;../ThirdParty/GLEW/lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
+    <IncludePath>../ThirdParty/GLM;../ThirdParty/GLFW/include;../ThirdParty/GLEW/include;$(IncludePath)</IncludePath>
     <LibraryPath>../ThirdParty/GLEW/lib64;../ThirdParty/GLFW/lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
