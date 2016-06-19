@@ -1,14 +1,8 @@
-//C++ Includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-// OpenGL Includes
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-//Cuda Includes
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "cuda_gl_interop.h"
+#include "OpenGLInterop.hpp"
+#include "Auxiliary.hpp"
 
 #define WINDOW_HEIGT (640)
 #define WINDOW_WIDTH (480)
@@ -16,6 +10,8 @@ using namespace std;
 
 int main()
 {
+    initializeCuda(true);
+
 	GLFWwindow* mainWindow;
 	cudaError_t cudaStatus;
 	if (!glfwInit())
