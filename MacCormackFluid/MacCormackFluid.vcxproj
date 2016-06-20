@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="Auxiliary.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenGLBuffer.cpp" />
     <ClCompile Include="OpenGLInterop.cpp" />
@@ -30,6 +31,7 @@
   <ItemGroup>
     <ClInclude Include="Allocator.hpp" />
     <ClInclude Include="Auxiliary.hpp" />
+    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="ConstantMemory.hpp" />
     <ClInclude Include="KernelTextures.hpp" />
