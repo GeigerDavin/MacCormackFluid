@@ -1,6 +1,8 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "OpenGLInterop.hpp"
 #include "Auxiliary.hpp"
+
+namespace CUDA {
 
 void registerGraphicsResource
     (cudaGraphicsResource** graphicsResource, unsigned int bufferId) {
@@ -41,3 +43,5 @@ void unmapGraphicsResource
         ERRORCHECK_CUDA();
     }
 }
+
+} // namespace CUDA

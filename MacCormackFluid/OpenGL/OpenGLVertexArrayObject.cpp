@@ -1,7 +1,9 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "OpenGLVertexArrayObject.hpp"
 
-#include "ResourceGuard.hpp"
+#include "../Utils/ResourceGuard.hpp"
+
+namespace OpenGL {
 
 class OpenGLVertexArrayObjectPrivate {
 public:
@@ -18,7 +20,7 @@ public:
     void release();
     bool isValid() const;
 
-    ResourceGuard<GLuint>* vaoGuard;
+    Utils::ResourceGuard<GLuint>* vaoGuard;
 };
 
 namespace {
@@ -36,10 +38,10 @@ bool OpenGLVertexArrayObjectPrivate::create() {
     glGenVertexArrays(1, &vao);
     if (vao) {
         destroy();
-        vaoGuard = new ResourceGuard<GLuint>(vao, freeVaoFunc);
+        vaoGuard = new Utils::ResourceGuard<GLuint>(vao, freeVaoFunc);
         return isValid();
     } else {
-        std::cout << "Could not create VAO" << std::endl;
+        std::cerr << "Could not create VAO" << std::endl;
         return false;
     }
 }
@@ -56,14 +58,14 @@ bool OpenGLVertexArrayObjectPrivate::bind() {
         glBindVertexArray(vaoGuard->get());
         return true;
     } else {
-        std::cout << "VAO not created" << std::endl;
+        std::cerr << "VAO not created" << std::endl;
         return false;
     }
 }
 
 void OpenGLVertexArrayObjectPrivate::release() {
     if (!isValid()) {
-        std::cout << "VAO not created" << std::endl;
+        std::cerr << "VAO not created" << std::endl;
     }
     glBindVertexArray(0);
 }
@@ -110,3 +112,5 @@ GLuint OpenGLVertexArrayObject::getId() const {
     D(const OpenGLVertexArrayObject);
     return (d->vaoGuard) ? (d->vaoGuard->get()) : (0);
 }
+
+} // namespace OpenGL

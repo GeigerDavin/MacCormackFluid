@@ -1,6 +1,8 @@
 #ifndef OPENGL_INTEROP_HPP
 #define OPENGL_INTEROP_HPP
 
+namespace CUDA {
+
 void registerGraphicsResource
     (cudaGraphicsResource** graphicsResource, unsigned int bufferId);
 void unregisterGraphicsResource
@@ -9,5 +11,7 @@ void* mapGraphicsResource
     (cudaGraphicsResource** graphicsResource);
 void unmapGraphicsResource
     (cudaGraphicsResource*  graphicsResource);
+
+} // namespace CUDA
 
 #endif

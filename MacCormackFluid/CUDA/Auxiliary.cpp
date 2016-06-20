@@ -1,8 +1,7 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "Auxiliary.hpp"
-#include <iostream>
-#include <math.h>
-#include <curand_kernel.h>
+
+namespace CUDA {
 
 bool useCuda = false;
 
@@ -96,6 +95,12 @@ void memCheck(const void* ptr, const char* location, const char* file, int line)
     }
 }
 
+dim3 getGridDim1D(uint count, uint threads) {
+    uint blocks = (uint) ceilf((float) count / threads);
+    dim3 grid(blocks);
+    return grid;
+}
+
 void deviceReset() {
     if (useCuda) {
         cudaDeviceReset();
@@ -109,3 +114,5 @@ void deviceSync() {
         ERRORCHECK_CUDA();
     }
 }
+
+} // namespace CUDA

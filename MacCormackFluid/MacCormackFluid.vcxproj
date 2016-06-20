@@ -19,33 +19,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Allocator.cpp" />
-    <ClCompile Include="Auxiliary.cpp" />
+    <ClCompile Include="CUDA\Allocator.cpp" />
+    <ClCompile Include="CUDA\Auxiliary.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="OpenGLBuffer.cpp" />
-    <ClCompile Include="OpenGLInterop.cpp" />
-    <ClCompile Include="OpenGLShaderProgram.cpp" />
-    <ClCompile Include="OpenGLVertexArrayObject.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="CUDA\OpenGLInterop.cpp" />
+    <ClCompile Include="OpenGL\OpenGLShaderProgram.cpp" />
+    <ClCompile Include="OpenGL\OpenGLVertexArrayObject.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Allocator.hpp" />
-    <ClInclude Include="Auxiliary.hpp" />
+    <ClInclude Include="CUDA\Allocator.hpp" />
+    <ClInclude Include="CUDA\Auxiliary.hpp" />
     <ClInclude Include="Common.hpp" />
-    <ClInclude Include="ConstantMemory.hpp" />
-    <ClInclude Include="KernelTextures.hpp" />
-    <ClInclude Include="MacCormack.hpp" />
-    <ClInclude Include="OpenGLBuffer.hpp" />
-    <ClInclude Include="OpenGLInterop.hpp" />
-    <ClInclude Include="OpenGLShaderProgram.hpp" />
-    <ClInclude Include="OpenGLVertexArrayObject.hpp" />
-    <ClInclude Include="ResourceGuard.hpp" />
+    <ClInclude Include="CUDA\KernelTextures.hpp" />
+    <ClInclude Include="Kernel\MacCormack.hpp" />
+    <ClInclude Include="MPI\Distributor.hpp" />
+    <ClInclude Include="OpenGL\OpenGLBuffer.hpp" />
+    <ClInclude Include="CUDA\OpenGLInterop.hpp" />
+    <ClInclude Include="OpenGL\OpenGLShaderProgram.hpp" />
+    <ClInclude Include="OpenGL\OpenGLVertexArrayObject.hpp" />
+    <ClInclude Include="Utils\Constant.hpp" />
+    <ClInclude Include="Utils\ResourceGuard.hpp" />
     <ClInclude Include="StdAfx.hpp" />
-    <ClInclude Include="Texture.hpp" />
-    <ClInclude Include="Vector.hpp" />
-    <ClInclude Include="VectorTypes.hpp" />
+    <ClInclude Include="Utils\Texture.hpp" />
+    <ClInclude Include="Utils\Vector.hpp" />
+    <ClInclude Include="Utils\VectorTypes.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="MacCormack.cu" />
+    <CudaCompile Include="Kernel\MacCormack.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />

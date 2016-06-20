@@ -1,7 +1,9 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "OpenGLBuffer.hpp"
 
-#include "ResourceGuard.hpp"
+#include "../Utils/ResourceGuard.hpp"
+
+namespace OpenGL {
 
 class OpenGLBufferPrivate {
 public:
@@ -23,7 +25,7 @@ public:
 
     OpenGLBuffer::Type type;
     OpenGLBuffer::UsagePattern usagePattern;
-    ResourceGuard<GLuint>* bufferGuard;
+    Utils::ResourceGuard<GLuint>* bufferGuard;
     static std::vector<size_t> bindingPoints;
 };
 
@@ -42,10 +44,10 @@ bool OpenGLBufferPrivate::create() {
     glGenBuffers(1, &bufferId);
     if (bufferId) {
         destroy();
-        bufferGuard = new ResourceGuard<GLuint>(bufferId, freeBufferFunc);
+        bufferGuard = new Utils::ResourceGuard<GLuint>(bufferId, freeBufferFunc);
         return isValid();
     } else {
-        std::cout << "Could not create buffer";
+        std::cerr << "Could not create buffer" << std::endl;
         return false;
     }
 }
@@ -62,14 +64,14 @@ bool OpenGLBufferPrivate::bind() {
         glBindBuffer(type, bufferGuard->get());
         return true;
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return false;
     }
 }
 
 void OpenGLBufferPrivate::release() {
     if (!isValid()) {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
     }
     glBindBuffer(type, 0);
 }
@@ -147,7 +149,7 @@ bool OpenGLBuffer::bindUniform(GLuint program, const char* uniformName) {
     if (isCreated() && uniformName) {
         GLuint uniformBlockIndex = glGetUniformBlockIndex(program, uniformName);
         if (uniformBlockIndex == GL_INVALID_INDEX) {
-            std::cout << "Could not find block index" << "'" << uniformName << "'";
+            std::cerr << "Could not find block index" << "'" << uniformName << "'" << std::endl;
             return false;
         }
         D(const OpenGLBuffer);
@@ -156,7 +158,7 @@ bool OpenGLBuffer::bindUniform(GLuint program, const char* uniformName) {
         glBindBufferBase(d->type, bindingPoint, d->bufferGuard->get());
         return true;
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return false;
     }
 }
@@ -182,7 +184,7 @@ int OpenGLBuffer::getSize() const {
         glGetBufferParameteriv(d->type, GL_BUFFER_SIZE, &value);
         return value;
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return -1;
     }
 }
@@ -194,7 +196,7 @@ bool OpenGLBuffer::read(int offset, void* data, int count) const {
         glGetBufferSubData(d->type, offset, count, data);
         return glGetError() == GL_NO_ERROR;
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return false;
     }
 }
@@ -204,7 +206,7 @@ void OpenGLBuffer::write(int offset, const void* data, int count) {
         D(const OpenGLBuffer);
         glBufferSubData(d->type, offset, count, data);
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return;
     }
 }
@@ -214,7 +216,7 @@ void OpenGLBuffer::allocate(const void* data, int count) {
         D(const OpenGLBuffer);
         glBufferData(d->type, count, data, d->usagePattern);
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return;
     }
 }
@@ -224,7 +226,7 @@ void* OpenGLBuffer::map(OpenGLBuffer::Access access) const {
         D(const OpenGLBuffer);
         return glMapBuffer(d->type, access);
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return nullptr;
     }
 }
@@ -234,7 +236,7 @@ void* OpenGLBuffer::mapRange(int offset, int count, OpenGLBuffer::RangeAccessFla
         D(const OpenGLBuffer);
         return glMapBufferRange(d->type, offset, count, access);
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return nullptr;
     }
 }
@@ -244,7 +246,9 @@ bool OpenGLBuffer::unmap() {
         D(const OpenGLBuffer);
         return glUnmapBuffer(d->type) == GL_TRUE;
     } else {
-        std::cout << "Buffer not created";
+        std::cerr << "Buffer not created" << std::endl;
         return false;
     }
 }
+
+} // namespace OpenGL

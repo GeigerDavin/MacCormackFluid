@@ -1,6 +1,8 @@
 #ifndef OPENGL_BUFFER_HPP
 #define OPENGL_BUFFER_HPP
 
+namespace OpenGL {
+
 class OpenGLBufferPrivate;
 
 class OpenGLBuffer {
@@ -90,5 +92,7 @@ private:
 
     OpenGLBufferPrivate* dPtr;
 };
+
+} // namespace OpenGL
 
 #endif

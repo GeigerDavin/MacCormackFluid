@@ -1,6 +1,8 @@
 #ifndef OPENGL_VERTEX_ARRAY_OBJECT_HPP
 #define OPENGL_VERTEX_ARRAY_OBJECT_HPP
 
+namespace OpenGL {
+
 class OpenGLVertexArrayObjectPrivate;
 
 class OpenGLVertexArrayObject {
@@ -54,5 +56,7 @@ private:
 
     OpenGLVertexArrayObjectPrivate* dPtr;
 };
+
+} // namespace OpenGL
 
 #endif

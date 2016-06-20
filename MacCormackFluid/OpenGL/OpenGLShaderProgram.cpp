@@ -1,9 +1,11 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "OpenGLShaderProgram.hpp"
 
-#include "ResourceGuard.hpp"
+#include "../Utils/ResourceGuard.hpp"
 
 #include <fstream>
+
+namespace OpenGL {
 
 class OpenGLShaderPrivate {
 public:
@@ -24,7 +26,7 @@ public:
     std::string log;
     bool compiled;
     OpenGLShader::Type shaderType;
-    ResourceGuard<GLuint>* shaderGuard;
+    Utils::ResourceGuard<GLuint>* shaderGuard;
 };
 
 namespace {
@@ -41,10 +43,10 @@ bool OpenGLShaderPrivate::create() {
     GLuint shader = glCreateShader(shaderType);
     if (shader) {
         destroy();
-        shaderGuard = new ResourceGuard<GLuint>(shader, freeShaderFunc);
+        shaderGuard = new Utils::ResourceGuard<GLuint>(shader, freeShaderFunc);
         return isValid();
     } else {
-        std::cout << "Could not create shader" << std::endl;
+        std::cerr << "Could not create shader" << std::endl;
         return false;
     }
 }
@@ -58,7 +60,7 @@ void OpenGLShaderPrivate::destroy() {
 
 bool OpenGLShaderPrivate::compile(OpenGLShader* q) {
     if (!isValid()) {
-        std::cout << "Shader not created" << std::endl;
+        std::cerr << "Shader not created" << std::endl;
         return false;
     }
 
@@ -110,10 +112,10 @@ bool OpenGLShaderPrivate::compile(OpenGLShader* q) {
             log = std::string(logBuffer);
         }
 
-        std::cout << "OpenGLShader::compile(" << type << "): " << log;
-        std::cout << "*** Problematic " << type << " shader source code ***";
-        std::cout << q->getSourceCode();
-        std::cout << "***";
+        std::cerr << "OpenGLShader::compile(" << type << "): " << log << std::endl;
+        std::cerr << "*** Problematic " << type << " shader source code ***" << std::endl;
+        std::cerr << q->getSourceCode() << std::endl;
+        std::cerr << "***" << std::endl;
 
         delete[] logBuffer;
     }
@@ -147,7 +149,7 @@ bool OpenGLShader::compileSourceCode(const char* source, int length) {
         glShaderSource(d->shaderGuard->get(), 1, &source, &length);
         return d->compile(this);
     } else {
-        std::cout << "Shader not created";
+        std::cerr << "Shader not created" << std::endl;
         return false;
     }
 }
@@ -166,7 +168,7 @@ bool OpenGLShader::compileSourceFile(const std::string& fileName) {
             source.append(line + "\n");
         }
     } else {
-        std::cout << "Unable to load shader file:" << fileName;
+        std::cerr << "Unable to load shader file:" << fileName << std::endl;
         return false;
     }
 
@@ -196,7 +198,7 @@ std::string OpenGLShader::getSourceCode() const {
         delete[] source;
         return sourceCode;
     } else {
-        std::cout << "Shader not created";
+        std::cerr << "Shader not created" << std::endl;
         return std::string();
     }
 }
@@ -241,7 +243,7 @@ public:
     bool linked;
     bool inited;
     bool removingShaders;
-    ResourceGuard<GLuint>* programGuard;
+    Utils::ResourceGuard<GLuint>* programGuard;
 
     std::string log;
     std::list<OpenGLShader *> shaders;
@@ -266,10 +268,10 @@ bool OpenGLShaderProgramPrivate::create() {
             delete programGuard;
             programGuard = nullptr;
         }
-        programGuard = new ResourceGuard<GLuint>(program, freeProgramFunc);
+        programGuard = new Utils::ResourceGuard<GLuint>(program, freeProgramFunc);
         return isValid();
     } else {
-        std::cout << "Could not create shader program";
+        std::cerr << "Could not create shader program" << std::endl;
         return false;
     }
 }
@@ -310,11 +312,11 @@ bool OpenGLShaderProgram::addShader(OpenGLShader* shader) {
             d->shaders.push_back(shader);
             return true;
         } else {
-            std::cout << "Shader not created";
+            std::cerr << "Shader not created" << std::endl;
             return false;
         }
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
         return false;
     }
 }
@@ -328,10 +330,10 @@ void OpenGLShaderProgram::removeShader(OpenGLShader* shader) {
             d->shaders.remove(shader);
             d->anonShaders.remove(shader);
         } else {
-            std::cout << "Shader not created";
+            std::cerr << "Shader not created" << std::endl;
         }
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
     }
 }
 
@@ -353,7 +355,7 @@ bool OpenGLShaderProgram::addShaderFromSourceCode(OpenGLShader::Type type, const
             return false;
         }
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
         return false;
     }
 }
@@ -375,7 +377,7 @@ bool OpenGLShaderProgram::addShaderFromSourceFile(OpenGLShader::Type type, const
             return false;
         }
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
         return false;
     }
 }
@@ -397,7 +399,7 @@ void OpenGLShaderProgram::removeAllShaders() {
         d->linked = false;
         d->removingShaders = false;
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
     }
 }
 
@@ -451,7 +453,7 @@ bool OpenGLShaderProgram::link() {
         }
         return d->linked;
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
         return false;
     }
 }
@@ -473,18 +475,18 @@ bool OpenGLShaderProgram::bind() {
             glUseProgram(d->programGuard->get());
             return true;
         } else {
-            std::cout << "Shader program must be linked first";
+            std::cerr << "Shader program must be linked first" << std::endl;
             return false;
         }
     } else {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
         return false;
     }
 }
 
 void OpenGLShaderProgram::release() {
     if (!isCreated()) {
-        std::cout << "Shader program not created";
+        std::cerr << "Shader program not created" << std::endl;
     }
     glUseProgram(0);
 }
@@ -556,8 +558,8 @@ void OpenGLShaderProgram::bindAttributeLocation(const char* name, int location) 
         glBindAttribLocation(d->programGuard->get(), location, name);
         d->linked = false;
     } else {
-        std::cout << "OpenGLShaderProgram::bindAttributeLocation(" << name
-                     << "): Shader program not created";
+        std::cerr << "OpenGLShaderProgram::bindAttributeLocation(" << name
+            << "): Shader program not created" << std::endl;
     }
 }
 
@@ -570,8 +572,8 @@ int OpenGLShaderProgram::getAttributeLocation(const char* name) const {
         D(const OpenGLShaderProgram);
         return glGetAttribLocation(d->programGuard->get(), name);
     } else {
-        std::cout << "OpenGLShaderProgram::getAttributeLocation(" << name
-                     << "): Shader program is not linked";
+        std::cerr << "OpenGLShaderProgram::getAttributeLocation(" << name
+            << "): Shader program is not linked" << std::endl;
         return -1;
     }
 }
@@ -738,8 +740,8 @@ int OpenGLShaderProgram::getUniformLocation(const char* name) const {
         D(const OpenGLShaderProgram);
         return glGetUniformLocation(d->programGuard->get(), name);
     } else {
-        std::cout << "OpenGLShaderProgram::getUniformLocation(" << name
-                     << "): Shader program is not linked";
+        std::cerr << "OpenGLShaderProgram::getUniformLocation(" << name
+            << "): Shader program is not linked" << std::endl;
         return -1;
     }
 }
@@ -960,3 +962,5 @@ void OpenGLShaderProgram::setUniformValue(const char* name, const GLfloat value[
 void OpenGLShaderProgram::setUniformValue(const char* name, const GLfloat value[4][4]) {
     setUniformValue(getUniformLocation(name), value);
 }
+
+} // namespace OpenGL

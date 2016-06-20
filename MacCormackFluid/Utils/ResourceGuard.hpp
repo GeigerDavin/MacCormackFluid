@@ -1,6 +1,8 @@
 #ifndef RESOURCE_GUARD_HPP
 #define RESOURCE_GUARD_HPP
 
+namespace Utils {
+
 template <class T>
 class ResourceGuard {
     DISABLE_COPY(ResourceGuard)
@@ -36,5 +38,7 @@ private:
     T resource;
     FreeResourceFunc func;
 };
+
+} // namespace Utils
 
 #endif

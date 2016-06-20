@@ -1,6 +1,8 @@
 #ifndef OPENGL_SHADER_PROGRAM_HPP
 #define OPENGL_SHADER_PROGRAM_HPP
 
+namespace OpenGL {
+
 class OpenGLShaderPrivate;
 
 class OpenGLShader {
@@ -184,5 +186,7 @@ private:
 
     OpenGLShaderProgramPrivate* dPtr;
 };
+
+} // namespace OpenGL
 
 #endif

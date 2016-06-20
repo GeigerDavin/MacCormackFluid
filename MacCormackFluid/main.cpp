@@ -1,18 +1,17 @@
 #include "StdAfx.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include "OpenGLInterop.hpp"
-#include "Auxiliary.hpp"
-#include "OpenGLBuffer.hpp"
-#include "OpenGLShaderProgram.hpp"
-#include "OpenGLVertexArrayObject.hpp"
+#include "Utils/Vector.hpp"
+#include "CUDA/Auxiliary.hpp"
 
+#include "OpenGL/OpenGLBuffer.hpp"
+#include "OpenGL/OpenGLShaderProgram.hpp"
+#include "OpenGL/OpenGLVertexArrayObject.hpp"
 
-#define WINDOW_HEIGT (640)
-#define WINDOW_WIDTH (480)
-using namespace std;
-static const GLfloat g_vertex_buffer_data[] = {
+#include "Kernel/MacCormack.hpp"
+
+#define WINDOW_WIDTH (1280)
+#define WINDOW_HEIGHT (720)
+
+static const std::vector<GLfloat> g_vertex_buffer_data = {
 	-1.0f, -1.0f, -1.0f,
 	-1.0f, -1.0f, 1.0f,
 	-1.0f, 1.0f, 1.0f,
@@ -51,8 +50,7 @@ static const GLfloat g_vertex_buffer_data[] = {
 	1.0f, -1.0f, 1.0f
 };
 
-// One color for each vertex. They were generated randomly.
-static const GLfloat g_color_buffer_data[] = {
+static const std::vector<GLfloat> g_color_buffer_data = {
 	0.583f, 0.771f, 0.014f,
 	0.609f, 0.115f, 0.436f,
 	0.327f, 0.483f, 0.844f,
@@ -90,165 +88,106 @@ static const GLfloat g_color_buffer_data[] = {
 	0.820f, 0.883f, 0.371f,
 	0.982f, 0.099f, 0.879f
 };
+
 int main()
 {
-    initializeCuda(true);
+    CUDA::initializeCuda(true);
+    if (!CUDA::useCuda) {
+        std::cerr << "CPU only not supported" << std::endl;
+        return -1;
+    }
 
-	GLFWwindow* mainWindow;
-	cudaError_t cudaStatus;
+	GLFWwindow* mainWindow = nullptr;
 	if (!glfwInit())
 	{
-		cerr << "Failind to Initialize GLFW. Error=" << glGetError() << endl;
+		std::cerr << "Failind to Initialize GLFW. Error=" << glGetError() << std::endl;
 		return -1;
 	}
 
-	// Create Main Window
-	mainWindow = glfwCreateWindow(WINDOW_HEIGT, WINDOW_WIDTH, "Mac Cormack Fluid", NULL, NULL);
+    int width = WINDOW_WIDTH;
+    int height = WINDOW_HEIGHT;
+	mainWindow = glfwCreateWindow(width, height, "MacCormack Fluid", NULL, NULL);
 	if (!mainWindow)
 	{
-		cerr << "Failed to Create the Main Window. Error=" << glGetError() << endl;
+		std::cerr << "Failed to Create the Main Window. Error=" << glGetError() << std::endl;
 		glfwTerminate();
 		return -1;
 	}
-	// Register Main Window
+
 	glfwMakeContextCurrent(mainWindow);
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 	{
-		cerr << "Failind to Initialize GLEW. Error=" << glGetError() << endl;
+		std::cerr << "Failind to Initialize GLEW. Error=" << glGetError() << std::endl;
 		return -1;
 	}
 
-	//Init Cuda Device
-	cudaStatus = cudaSetDevice(0);
-	if (cudaStatus != cudaSuccess) {
-		cerr << "cudaSetDevice failed. Error: " << cudaGetErrorString(cudaGetLastError()) << endl;
-		return -1;
-	}
+    OpenGL::OpenGLShaderProgram shaderProgram;
+    OpenGL::OpenGLVertexArrayObject vao;
 
-	// Enable depth test
-	glEnable(GL_DEPTH_TEST);
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS);
+	vao.create();
+	vao.bind();
 
+    shaderProgram.addShaderFromSourceFile(OpenGL::OpenGLShader::Vertex, "Shader/CubeVertex.glsl");
+    shaderProgram.addShaderFromSourceFile(OpenGL::OpenGLShader::Fragment, "Shader/CubeFragment.glsl");
+    shaderProgram.link();
 
+    Utils::Vector<GLfloat> vertices(&g_vertex_buffer_data[0], g_vertex_buffer_data.size());
+    Utils::Vector<GLfloat> colors(&g_color_buffer_data[0], g_color_buffer_data.size());
 
-	OpenGLBuffer bufferColor;
-	OpenGLBuffer bufferVertex;
-	OpenGLShaderProgram shader;
-	OpenGLVertexArrayObject vertexes;
+    OpenGL::OpenGLBuffer* buffer = vertices.getBuffer();
+    buffer->bind();
+    shaderProgram.enableAttributeArray(0);
+    shaderProgram.setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+    buffer->release();
 
+    buffer = colors.getBuffer();
+    buffer->bind();
+    shaderProgram.enableAttributeArray(1);
+    shaderProgram.setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
+    buffer->release();
 
-	vertexes.create();
-	vertexes.bind();
+	vao.release();
 
-	shader.addShaderFromSourceFile(OpenGLShader::Vertex, "shader/cubeshader.vertexshader");
-	shader.addShaderFromSourceFile(OpenGLShader::Fragment, "shader/cubeshader.fragmentshader");
-	shader.link();
-	shader.bind();
-
-
-	bufferColor.create();
-	bufferColor.bind();
-	bufferColor.allocate(g_vertex_buffer_data, sizeof(g_color_buffer_data));
-
-	// 1rst attribute buffer : vertices
-	shader.enableAttributeArray(0);
-	shader.setAttributeBuffer(
-		0,
-		GL_FLOAT,
-		0,
-		3,
-		0
-		);
-
-	bufferColor.release();
-
-	bufferVertex.create();
-	bufferVertex.bind();
-	bufferVertex.allocate(g_vertex_buffer_data, sizeof(g_vertex_buffer_data));
-
-
-	// 2nd attribute buffer : colors
-	shader.enableAttributeArray(1);
-	shader.setAttributeBuffer(
-		1,
-		GL_FLOAT,
-		0,
-		3,
-		0
-		);
-	bufferVertex.release();
-
-	// Get a handle for our "MVP" uniform
-	GLuint MatrixID = shader.getUniformLocation("MVP");
-
-	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-	// Camera matrix
-	glm::mat4 View = glm::lookAt(
-		glm::vec3(4, 3, -3), // Camera is at (4,3,-3), in World Space
-		glm::vec3(0, 0, 0), // and looks at the origin
-		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		);
-	// Model matrix : an identity matrix (model will be at the origin)
-	glm::mat4 Model = glm::mat4(1.0f);
-	// Our ModelViewProjection : multiplication of our 3 matrices
-	glm::mat4 MVP = Projection * View * Model; // Remember, matrix multiplication is the other way around
-
-	// in the "MVP" uniform
-	shader.setUniformValue(MatrixID,MVP);
-
-	vertexes.release();
-
-	////GLuint positionsVBO;
-	//struct cudaGraphicsResource* positionsVBO_CUDA;
-
-	//glGenBuffers(1, &positionsVBO);
-	//glBindBuffer(GL_ARRAY_BUFFER, positionsVBO);
-	//unsigned int size = WINDOW_HEIGT * WINDOW_WIDTH * 4 * sizeof(float);
-	//glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//cudaGraphicsGLRegisterBuffer(&positionsVBO_CUDA, positionsVBO, cudaGraphicsMapFlagsWriteDiscard);
-
-	// Loop until the User closes the Main Window
+    GLuint MatrixID = shaderProgram.getUniformLocation("MVP");
 	while (!glfwWindowShouldClose(mainWindow))
 	{
-		// Render here 
+        Kernel::computeCube(vertices, colors);
+
+        glfwGetWindowSize(mainWindow, &width, &height);
+        glfwGetFramebufferSize(mainWindow, &width, &height);
+        glViewport(0, 0, width, height);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		shader.bind();
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
+        glm::mat4 view = glm::lookAt(glm::vec3(4, 3, -3),
+                                     glm::vec3(0, 0, 0),
+                                     glm::vec3(0, 1, 0));
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 MVP = projection * view * model;
+
+        shaderProgram.bind();
+        shaderProgram.setUniformValue(MatrixID, MVP);
 		{
-			OpenGLVertexArrayObject::Binder binder(&vertexes);
-			// Draw the triangle !
-			glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 12*3 indices starting at 0 -> 12 triangles
+			OpenGL::OpenGLVertexArrayObject::Binder binder(&vao);
+			glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 
 		}
-		shader.release();
+		shaderProgram.release();
 
-
-		// Swap front and back buffers
 		glfwSwapBuffers(mainWindow);
-
-		// Poll for and process events
 		glfwPollEvents();
 	}
 
-	// Exit GLFW Cleanly
 	glfwTerminate();
 
-	// cudaDeviceReset must be called before exiting in order for profiling and
-	// tracing tools such as Nsight and Visual Profiler to show complete traces.
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		cerr << "cudaDeviceReset failed. Error: " << cudaGetErrorString(cudaGetLastError()) << endl;
-	    return -1;
-	}
+	cudaDeviceReset();
+    ERRORCHECK_CUDA();
+
 	return 0;
-}
-
-void render()
-{
-
-	
 }

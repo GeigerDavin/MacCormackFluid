@@ -1,6 +1,8 @@
 #ifndef KERNEL_TEXTURES_HPP
 #define KERNEL_TEXTURES_HPP
 
+namespace CUDA {
+
 texture<float4, cudaTextureType3D> speed;
 texture<float, cudaTextureType3D> speedSize;
 
@@ -22,5 +24,7 @@ void unbindTexture(const Texture& tex) {
 		ERRORCHECK_CUDA();
 	}
 }
+
+} // namespace CUDA
 
 #endif

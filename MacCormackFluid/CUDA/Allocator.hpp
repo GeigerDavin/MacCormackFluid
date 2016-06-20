@@ -1,8 +1,7 @@
 #ifndef ALLOCATOR_HPP
 #define ALLOCATOR_HPP
 
-#include <cstdio>
-#include <cuda_runtime.h>
+namespace CUDA {
 
 void* mallocHost(size_t size);
 void* reallocHost(void* ptr, size_t size);
@@ -23,5 +22,14 @@ void moveHostToDeviceAsync(void* dst, const void* src, size_t count, cudaStream_
 void moveDeviceToHostAsync(void* dst, const void* src, size_t count, cudaStream_t stream = nullptr);
 void moveDeviceToDeviceAsync(void* dst, const void* src, size_t count, cudaStream_t stream = nullptr);
 
-#endif
+template <class Symbol>
+inline void moveHostToSymbol(Symbol& symbol, const Symbol& source) {
+    void* target = nullptr;
+    cudaGetSymbolAddress(&target, symbol);
+    ERRORCHECK_CUDA();
+    moveHostToDevice(target, &source, sizeof(source));
+}
 
+} // namespace CUDA
+
+#endif

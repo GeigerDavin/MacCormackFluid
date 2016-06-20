@@ -1,10 +1,8 @@
-#include "StdAfx.hpp"
+#include "../StdAfx.hpp"
 #include "Allocator.hpp"
 #include "Auxiliary.hpp"
 
-#include <stdlib.h>
-#include <cstring>
-#include <iostream>
+namespace CUDA {
 
 #define MEMCHECK_HOST(ptr) memCheck(ptr, "Host", __FILE__, __LINE__)
 #define MEMCHECK_DEVICE(ptr) memCheck(ptr, "Device", __FILE__, __LINE__)
@@ -156,3 +154,5 @@ void deviceMemset(void* ptr, int value, size_t count) {
     cudaMemset(ptr, value, count);
     ERRORCHECK_CUDA();
 }
+
+} // namespace CUDA
