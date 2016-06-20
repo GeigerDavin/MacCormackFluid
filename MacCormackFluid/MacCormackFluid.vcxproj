@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="CUDA\Allocator.cpp" />
     <ClCompile Include="CUDA\Auxiliary.cpp" />
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="OpenGL\OpenGLBuffer.cpp" />
@@ -30,9 +30,9 @@
     <ClCompile Include="OpenGL\OpenGLVertexArrayObject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera\Camera.hpp" />
     <ClInclude Include="CUDA\Allocator.hpp" />
     <ClInclude Include="CUDA\Auxiliary.hpp" />
-    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="CUDA\KernelTextures.hpp" />
     <ClInclude Include="Kernel\MacCormack.hpp" />

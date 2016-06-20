@@ -1,7 +1,7 @@
 #include "StdAfx.hpp"
 #include "Utils/Vector.hpp"
 #include "CUDA/Auxiliary.hpp"
-#include "Camera.hpp"
+#include "Camera/Camera.hpp"
 
 #include "OpenGL/OpenGLBuffer.hpp"
 #include "OpenGL/OpenGLShaderProgram.hpp"
@@ -152,80 +152,38 @@ int main()
 	vao.release();
 
     GLuint MatrixID = shaderProgram.getUniformLocation("MVP");
-	while (!glfwWindowShouldClose(mainWindow))
-	{
-        Kernel::computeCube(vertices, colors);
+        
 
-        glfwGetWindowSize(mainWindow, &width, &height);
-        glfwGetFramebufferSize(mainWindow, &width, &height);
-        glViewport(0, 0, width, height);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
-        glm::mat4 view = glm::lookAt(glm::vec3(4, 3, -3),
-                                     glm::vec3(0, 0, 0),
-                                     glm::vec3(0, 1, 0));
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 MVP = projection * view * model;
-
-	bufferColor.release();
-
-	bufferVertex.create();
-	bufferVertex.bind();
-	bufferVertex.allocate(g_vertex_buffer_data, sizeof(g_vertex_buffer_data));
-
-
-	// 2nd attribute buffer : colors
-	shader.enableAttributeArray(1);
-	shader.setAttributeBuffer(
-		1,
-		GL_FLOAT,
-		0,
-		3,
-		0
-		);
-	bufferVertex.release();
-
-	vertexes.release();
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
 
-	////GLuint positionsVBO;
-	//struct cudaGraphicsResource* positionsVBO_CUDA;
-
-	//glGenBuffers(1, &positionsVBO);
-	//glBindBuffer(GL_ARRAY_BUFFER, positionsVBO);
-	//unsigned int size = WINDOW_HEIGT * WINDOW_WIDTH * 4 * sizeof(float);
-	//glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//cudaGraphicsGLRegisterBuffer(&positionsVBO_CUDA, positionsVBO, cudaGraphicsMapFlagsWriteDiscard);
 
 	// Loop until the User closes the Main Window
-
 	Camera camera(mainWindow);
 	while (!glfwWindowShouldClose(mainWindow))
 	{
+		Kernel::computeCube(vertices, colors);
 		// Render here 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		shader.bind();
+
+		shaderProgram.bind();
 		{
-			OpenGLVertexArrayObject::Binder binder(&vertexes);
+			OpenGL::OpenGLVertexArrayObject::Binder binder(&vao);
+
 			// Draw the triangle !
 			camera.computeMatricesFromInputs();
 
 			// Get a handle for our "MVP" uniform
-			GLuint MatrixID = shader.getUniformLocation("MVP");
+			GLuint MatrixID = shaderProgram.getUniformLocation("MVP");
 
 			glm::mat4 MVP = camera.getProjectionMatrix() * camera.getViewMatrix() * glm::mat4(1.0f);
 
 			// in the "MVP" uniform
-			shader.setUniformValue(MatrixID, MVP);
+			shaderProgram.setUniformValue(MatrixID, MVP);
 			glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 12*3 indices starting at 0 -> 12 triangles
 
 		}

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "StdAfx.hpp"
-
 class Camera
 {
 private:
@@ -10,7 +8,7 @@ private:
 
 
 	// Initial position : on +Z
-	glm::vec3 position = glm::vec3(0, -5,0);
+	glm::vec3 position = glm::vec3(0,0,-5);
 	// Initial horizontal angle : toward -Z
 	float horizontalAngle = 3.14f;
 	// Initial vertical angle : none
