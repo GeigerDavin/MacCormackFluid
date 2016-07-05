@@ -1,6 +1,8 @@
 #ifndef CUDA_TEXTURE_REFERENCE_MANAGEMENT_HPP
 #define CUDA_TEXTURE_REFERENCE_MANAGEMENT_HPP
 
+#include "DeviceManagement.hpp"
+
 namespace CUDA {
 namespace TextureReferenceManagement {
 

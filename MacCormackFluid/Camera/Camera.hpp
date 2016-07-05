@@ -25,8 +25,6 @@ private:
 	int windowWidth;
 	int windowHeigt;
 
-	void Camera::ScrollCallback(GLFWwindow* window, double x, double y);
-
 public:
 	Camera(GLFWwindow* window);
 	~Camera();

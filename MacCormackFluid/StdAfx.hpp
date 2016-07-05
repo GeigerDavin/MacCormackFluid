@@ -1,13 +1,14 @@
 #ifndef STD_AFX_HPP
 #define STD_AFX_HPP
 
-#include <string>
+
 #include <list>
 #include <vector>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
