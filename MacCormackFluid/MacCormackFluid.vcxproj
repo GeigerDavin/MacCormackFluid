@@ -20,36 +20,77 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera\Camera.cpp" />
-    <ClCompile Include="CUDA\Allocator.cpp" />
-    <ClCompile Include="CUDA\Auxiliary.cpp" />
+    <ClCompile Include="CUDA\CudaGLGraphicsResource.cpp" />
+    <ClCompile Include="CUDA\CudaSurfaceObject.cpp" />
+    <ClCompile Include="CUDA\Modules\EventManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\MemoryManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\DeviceManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\ErrorHandling.cpp" />
+    <ClCompile Include="CUDA\CudaTextureObject.cpp" />
+    <ClCompile Include="CUDA\Modules\OpenGLInteroperability.cpp" />
+    <ClCompile Include="CUDA\Modules\StreamManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\SurfaceObjectManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\SurfaceReferenceManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\TextureObjectManagement.cpp" />
+    <ClCompile Include="CUDA\Modules\TextureReferenceManagement.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="OpenGL\OpenGLBuffer.cpp" />
-    <ClCompile Include="CUDA\OpenGLInterop.cpp" />
+    <ClCompile Include="CUDA\Modules\GraphicsInteroperability.cpp" />
     <ClCompile Include="OpenGL\OpenGLShaderProgram.cpp" />
     <ClCompile Include="OpenGL\OpenGLVertexArrayObject.cpp" />
+    <ClCompile Include="Utils\Algebra.cpp" />
+    <ClCompile Include="Utils\StopWatch.cpp" />
+    <ClCompile Include="Utils\TrackSphere.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\Camera.hpp" />
-    <ClInclude Include="CUDA\Allocator.hpp" />
-    <ClInclude Include="CUDA\Auxiliary.hpp" />
+    <ClInclude Include="CUDA\CudaArray.hpp" />
+    <ClInclude Include="CUDA\CudaArray2D.hpp" />
+    <ClInclude Include="CUDA\CudaArray3D.hpp" />
+    <ClInclude Include="CUDA\CudaDevicePointer.hpp" />
+    <ClInclude Include="CUDA\CudaDevicePointer2D.hpp" />
+    <ClInclude Include="CUDA\CudaDevicePointer3D.hpp" />
+    <ClInclude Include="CUDA\CudaHostPointer.hpp" />
+    <ClInclude Include="CUDA\CudaMipmappedArray.hpp" />
+    <ClInclude Include="CUDA\Modules\ErrorHandling.hpp" />
+    <ClInclude Include="CUDA\Modules\EventManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\MemoryManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\DeviceManagement.hpp" />
     <ClInclude Include="Common.hpp" />
-    <ClInclude Include="CUDA\KernelTextures.hpp" />
-    <ClInclude Include="Kernel\MacCormack.hpp" />
+    <ClInclude Include="CUDA\Modules\OpenGLInteroperability.hpp" />
+    <ClInclude Include="CUDA\Modules\StreamManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\SurfaceObjectManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\SurfaceReferenceManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\TextureObjectManagement.hpp" />
+    <ClInclude Include="CUDA\Modules\TextureReferenceManagement.hpp" />
+    <ClInclude Include="Kernel\Advect.hpp" />
+    <ClInclude Include="Kernel\Constant.hpp" />
+    <ClInclude Include="Kernel\Divergence.hpp" />
+    <ClInclude Include="Kernel\Jacobi.hpp" />
+    <ClInclude Include="Kernel\Project.hpp" />
+    <ClInclude Include="Kernel\Render.hpp" />
     <ClInclude Include="MPI\Distributor.hpp" />
     <ClInclude Include="OpenGL\OpenGLBuffer.hpp" />
-    <ClInclude Include="CUDA\OpenGLInterop.hpp" />
+    <ClInclude Include="CUDA\Modules\GraphicsInteroperability.hpp" />
     <ClInclude Include="OpenGL\OpenGLShaderProgram.hpp" />
     <ClInclude Include="OpenGL\OpenGLVertexArrayObject.hpp" />
-    <ClInclude Include="Utils\Constant.hpp" />
+    <ClInclude Include="CUDA\CudaGLGraphicsResource.hpp" />
+    <ClInclude Include="Utils\Algebra.hpp" />
+    <ClInclude Include="Utils\StopWatch.hpp" />
+    <ClInclude Include="Utils\TrackSphere.hpp" />
+    <ClInclude Include="Utils\VectorTypes.hpp" />
     <ClInclude Include="Utils\ResourceGuard.hpp" />
     <ClInclude Include="StdAfx.hpp" />
-    <ClInclude Include="Utils\Texture.hpp" />
-    <ClInclude Include="Utils\Vector.hpp" />
-    <ClInclude Include="Utils\VectorTypes.hpp" />
+    <ClInclude Include="CUDA\CudaSurfaceObject.hpp" />
+    <ClInclude Include="CUDA\CudaTextureObject.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="Kernel\MacCormack.cu" />
+    <CudaCompile Include="Kernel\Advect.cu" />
+    <CudaCompile Include="Kernel\Divergence.cu" />
+    <CudaCompile Include="Kernel\Jacobi.cu" />
+    <CudaCompile Include="Kernel\Project.cu" />
+    <CudaCompile Include="Kernel\Render.cu" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -125,6 +166,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -135,12 +177,18 @@
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_52,sm_52;compute_50,sm_50;compute_30,sm_30;%(CodeGeneration)</CodeGeneration>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <FastMath>true</FastMath>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -153,6 +201,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_52,sm_52;compute_50,sm_50;compute_30,sm_30;%(CodeGeneration)</CodeGeneration>
+      <FastMath>true</FastMath>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -162,6 +212,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -174,6 +225,11 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_52,sm_52;compute_50,sm_50;compute_30,sm_30;%(CodeGeneration)</CodeGeneration>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <FastMath>true</FastMath>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -182,6 +238,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -196,6 +253,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_52,sm_52;compute_50,sm_50;compute_30,sm_30;%(CodeGeneration)</CodeGeneration>
+      <FastMath>true</FastMath>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

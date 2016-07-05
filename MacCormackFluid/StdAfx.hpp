@@ -14,6 +14,7 @@
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+#include <device_functions.h>
 #include <device_launch_parameters.h>
 
 #include <glm/glm.hpp>
@@ -22,10 +23,6 @@
 #include <glm/gtx/transform.hpp>
 
 #include "Common.hpp"
-
-#include "Utils/Vector.hpp"
-#include "Utils/Texture.hpp"
-#include "Utils/Constant.hpp"
 #include "Utils/VectorTypes.hpp"
 
 #endif

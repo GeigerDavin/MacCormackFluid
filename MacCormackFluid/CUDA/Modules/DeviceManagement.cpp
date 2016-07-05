@@ -1,9 +1,13 @@
-#include "../StdAfx.hpp"
-#include "Auxiliary.hpp"
+#include "../../StdAfx.hpp"
+#include "DeviceManagement.hpp"
+#include "ErrorHandling.hpp"
+#include "MemoryManagement.hpp"
 
 namespace CUDA {
 
 bool useCuda = false;
+
+namespace DeviceManagement {
 
 void initializeCuda(bool useGpu, int device) {
     useCuda = true;
@@ -14,7 +18,7 @@ void initializeCuda(bool useGpu, int device) {
     }
 
     int count = 0;
-    cudaGetDeviceCount(&count);
+    getDeviceCount(&count);
     if (count < 1) {
         std::cout << "No CUDA devices found; using CPU only" << std::endl;
         useCuda = false;
@@ -22,25 +26,23 @@ void initializeCuda(bool useGpu, int device) {
 
     if (useCuda) {
         if (device >= 0 && device < count) {
-            cudaSetDevice(device);
-            ERRORCHECK_CUDA();
+            setDevice(device);
             cudaDeviceProp prop;
-            cudaGetDeviceProperties(&prop, device);
+            getDeviceProperties(&prop, device);
             if (prop.major < 2) {
                 device = -1;
             }
         } else {
             size_t freeMax = 0;
             for (int i = 0; i < count; i++) {
-                cudaSetDevice(i);
-                ERRORCHECK_CUDA();
+                setDevice(i);
                 cudaDeviceProp prop;
-                cudaGetDeviceProperties(&prop, i);
+                getDeviceProperties(&prop, i);
                 if (prop.major < 2) {
                     continue;
                 }
-                size_t free, total;
-                cudaMemGetInfo(&free, &total);
+                size_t free = 0, total = 0;
+                MemoryManagement::getMemInfo(&free, &total);
                 if (free > freeMax) {
                     freeMax = free;
                     device = i;
@@ -54,15 +56,13 @@ void initializeCuda(bool useGpu, int device) {
     }
 
     if (useCuda) {
-        cudaSetDevice(device);
-        cudaFree(0);
-
-        ERRORCHECK_CUDA();
+        setDevice(device);
+        MemoryManagement::freeDevice(0);
 
         cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, device);
-        size_t free, total;
-        cudaMemGetInfo(&free, &total);
+        getDeviceProperties(&prop, device);
+        size_t free = 0, total = 0;
+        MemoryManagement::getMemInfo(&free, &total);
 
         printf("_________________________________________\n");
         printf("%s (%lluMB free)\n", prop.name, (unsigned long long) free / 1048576);
@@ -72,47 +72,44 @@ void initializeCuda(bool useGpu, int device) {
         printf("Max threads per dim: (%d, %d, %d)\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
         printf("_________________________________________\n");
         printf("\n");
-        ERRORCHECK_CUDA();
     }
-}
-
-void errorCheckCuda(const char* file, int line) {
-    if (!useCuda) {
-        return;
-    }
-    cudaDeviceSynchronize();
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        printf("CUDA Error @ %s (line %d): %s\n", file, line, cudaGetErrorString(err));
-        exit(-1);
-    }
-}
-
-void memCheck(const void* ptr, const char* location, const char* file, int line) {
-    if (!ptr) {
-        printf("%s malloc returned null @ %s (line %d)\n", location, file, line);
-        exit(-1);
-    }
-}
-
-dim3 getGridDim1D(uint count, uint threads) {
-    uint blocks = (uint) ceilf((float) count / threads);
-    dim3 grid(blocks);
-    return grid;
 }
 
 void deviceReset() {
     if (useCuda) {
-        cudaDeviceReset();
-        ERRORCHECK_CUDA();
+        checkCudaError(cudaDeviceReset());
     }
 }
 
 void deviceSync() {
     if (useCuda) {
-        cudaDeviceSynchronize();
-        ERRORCHECK_CUDA();
+        checkCudaError(cudaDeviceSynchronize());
     }
 }
 
+void setDevice(int device) {
+    if (useCuda) {
+        checkCudaError(cudaSetDevice(device));
+    }
+}
+
+void getDevice(int* device) {
+    if (useCuda) {
+        checkCudaError(cudaGetDevice(device));
+    }
+}
+
+void getDeviceCount(int* count) {
+    if (useCuda) {
+        checkCudaError(cudaGetDeviceCount(count));
+    }
+}
+
+void getDeviceProperties(cudaDeviceProp* prop, int device) {
+    if (useCuda) {
+        checkCudaError(cudaGetDeviceProperties(prop, device));
+    }
+}
+
+} // namespace DeviceManagement
 } // namespace CUDA
