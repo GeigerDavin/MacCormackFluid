@@ -98,6 +98,10 @@ int main() {
 
     return EXIT_SUCCESS;
 }
+void GLFW_ErrorCallback(int error, const char* description)
+{
+	  std::cerr << description << std::endl;
+}
 
 bool initialize() {
     CUDA::DeviceManagement::initializeCuda(true);
@@ -106,8 +110,10 @@ bool initialize() {
         return false;
     }
 
+    glfwSetErrorCallback(GLFW_ErrorCallback);
+
     if (!glfwInit()) {
-        std::cerr << "Failind to Initialize GLFW. Error=" << glGetError() << std::endl;
+        std::cerr << "Failed to Initialize GLFW. Error=" << glGetError() << std::endl;
         return false;
     }
 
@@ -122,7 +128,7 @@ bool initialize() {
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        std::cerr << "Failind to Initialize GLEW. Error=" << glGetError() << std::endl;
+        std::cerr << "Failed to Initialize GLEW. Error=" << glGetError() << std::endl;
         return false;
     }
 
