@@ -31,6 +31,7 @@ public:
 
 namespace {
     void freeSurfaceFunc(cudaSurfaceObject_t surf) {
+        std::cout << "Destroy surface " << surf << std::endl;
         SurfaceObjectManagement::destroySurfaceObject(surf);
     }
 }
@@ -85,8 +86,19 @@ CudaSurfaceObject::CudaSurfaceObject()
 CudaSurfaceObject::CudaSurfaceObject(ResourceType type)
     : dPtr(new CudaSurfaceObjectPrivate(type)) {}
 
+CudaSurfaceObject::CudaSurfaceObject(CudaSurfaceObject&& other) {
+    dPtr = std::move(other.dPtr);
+    other.dPtr = nullptr;
+}
+
 CudaSurfaceObject::~CudaSurfaceObject() {
     destroy();
+}
+
+CudaSurfaceObject& CudaSurfaceObject::operator = (CudaSurfaceObject&& other) {
+    dPtr = std::move(other.dPtr);
+    other.dPtr = nullptr;
+    return *this;
 }
 
 void CudaSurfaceObject::setResourceType(ResourceType type) {
@@ -113,7 +125,7 @@ void CudaSurfaceObject::destroy() {
     _delete(dPtr);
 }
 
-cudaSurfaceObject_t CudaSurfaceObject::getSurf() const {
+cudaSurfaceObject_t CudaSurfaceObject::getId() const {
     D(const CudaSurfaceObject);
     return (d->surfaceGuard) ? (d->surfaceGuard->get()) : (0);
 }

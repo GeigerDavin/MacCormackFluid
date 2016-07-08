@@ -35,6 +35,7 @@ public:
     cudaChannelFormatDesc channelDesc;
     CudaTextureObject::ReadMode readMode;
     CudaTextureObject::FilterMode filterMode;
+    CudaTextureObject::FilterMode mipmapFilterMode;
     CudaTextureObject::ResourceType resourceType;
     CudaTextureObject::AddressMode addressMode[3];
     Utils::ResourceGuard<cudaTextureObject_t>* textureGuard;
@@ -42,6 +43,7 @@ public:
 
 namespace {
     void freeTextureFunc(cudaTextureObject_t tex) {
+        std::cout << "Destroy texture " << tex << std::endl;
         TextureObjectManagement::destroyTextureObject(tex);
     }
 }
@@ -60,6 +62,7 @@ bool CudaTextureObjectPrivate::create(void* data) {
         resDesc.res.array.array = static_cast<cudaArray_t>(data);
         break;
     case CudaTextureObject::ResourceType::Mipmap:
+        normalized = true;
         resDesc.res.mipmap.mipmap = static_cast<cudaMipmappedArray_t>(data);
         break;
     case CudaTextureObject::ResourceType::Linear:
@@ -76,25 +79,10 @@ bool CudaTextureObjectPrivate::create(void* data) {
     texDesc.normalizedCoords = normalized;
     texDesc.readMode = static_cast<cudaTextureReadMode>(readMode);
     texDesc.filterMode = static_cast<cudaTextureFilterMode>(filterMode);
+    //texDesc.mipmapFilterMode = static_cast<cudaTextureFilterMode>(mipmapFilterMode);
     for (int i = 0; i < 3; i++) {
         texDesc.addressMode[i] = static_cast<cudaTextureAddressMode>(addressMode[i]);
     }
-
-    texDesc.maxAnisotropy = 16;
-    texDesc.mipmapLevelBias = 0;
-    texDesc.minMipmapLevelClamp = 0;
-    texDesc.maxMipmapLevelClamp = std::numeric_limits<float>::max();
-
-    cudaResourceViewDesc t;
-    memset(&t, 0, sizeof(cudaResourceViewDesc));
-    t.width = 20;
-    t.depth = 20;
-    t.height = 20;
-    t.format = cudaResViewFormatFloat1;
-    t.firstMipmapLevel = 0;
-    t.lastMipmapLevel = 1;
-    t.firstLayer = 0;
-    t.lastLayer = 1;
 
     cudaTextureObject_t tex = 0;
     TextureObjectManagement::createTextureObject(&tex, &resDesc, &texDesc, NULL);
@@ -122,8 +110,19 @@ CudaTextureObject::CudaTextureObject()
 CudaTextureObject::CudaTextureObject(ResourceType type)
     : dPtr(new CudaTextureObjectPrivate(type)) {}
 
+CudaTextureObject::CudaTextureObject(CudaTextureObject&& other) {
+    dPtr = std::move(other.dPtr);
+    other.dPtr = nullptr;
+}
+
 CudaTextureObject::~CudaTextureObject() {
     destroy();
+}
+
+CudaTextureObject& CudaTextureObject::operator = (CudaTextureObject&& other) {
+    dPtr = std::move(other.dPtr);
+    other.dPtr = nullptr;
+    return *this;
 }
 
 void CudaTextureObject::setResourceType(ResourceType type) {
@@ -210,7 +209,7 @@ void CudaTextureObject::destroy() {
     _delete(dPtr);
 }
 
-cudaTextureObject_t CudaTextureObject::getTex() const {
+cudaTextureObject_t CudaTextureObject::getId() const {
     D(const CudaTextureObject);
     return (d->textureGuard) ? (d->textureGuard->get()) : (0);
 }

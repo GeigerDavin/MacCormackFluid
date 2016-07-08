@@ -21,12 +21,6 @@ int gpuGetMaxGflopsDeviceId();
 int findCudaDevice(int argc, const char** argv);
 bool checkCudaCapabilities(int major, int minor);
 
-inline dim3 getGridDim1D(uint count, uint threads = THREADS) {
-    uint blocks = (uint)ceilf((float)count / threads);
-    dim3 grid(blocks);
-    return grid;
-}
-
 } // namespace DeviceManagement
 } // namespace CUDA
 

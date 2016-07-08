@@ -31,6 +31,7 @@ public:
 
 namespace {
     void freeBufferFunc(GLuint id) {
+        std::cout << "Destroy OpenGL buffer " << id << std::endl;
         glDeleteBuffers(1, &id);
     }
 }

@@ -36,7 +36,10 @@ public:
 public:
     CudaTextureObject();
     explicit CudaTextureObject(ResourceType type);
+    CudaTextureObject(CudaTextureObject&& other);
     ~CudaTextureObject();
+
+    CudaTextureObject& operator = (CudaTextureObject&& other);
 
 public:
     void setResourceType(ResourceType type);
@@ -65,7 +68,8 @@ public:
 
     void destroy();
 
-    cudaTextureObject_t getTex() const;
+    /* Return opaque texture object to pass into the CUDA kernel */
+    cudaTextureObject_t getId() const;
 
 private:
     DECLARE_PRIVATE(CudaTextureObject)

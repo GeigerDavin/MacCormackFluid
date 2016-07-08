@@ -1,14 +1,13 @@
 #ifndef STD_AFX_HPP
 #define STD_AFX_HPP
 
-
+#include <string>
 #include <list>
 #include <vector>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -24,6 +23,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "Common.hpp"
-#include "Utils/VectorTypes.hpp"
+#include "Constant.hpp"
+#include "Math/VectorTypes.hpp"
 
 #endif

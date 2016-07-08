@@ -1,8 +1,6 @@
 #ifndef CONSTANT_HPP
 #define CONSTANT_HPP
 
-namespace Kernel {
-
 typedef struct {
     float4 m[4];
 } float4x4;
@@ -23,8 +21,6 @@ struct __align__(128) Constant {
     int smoky;
 };
 
-__constant__ static Constant constDev;
-
-} // namespace Kernel
+__constant__ static Constant deviceConstant;
 
 #endif

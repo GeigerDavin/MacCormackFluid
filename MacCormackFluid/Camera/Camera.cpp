@@ -10,7 +10,6 @@ Camera::Camera(GLFWwindow* window)
 	//glfwSetScrollCallback(window, *this.ScrollCallback);
 }
 
-
 Camera::~Camera()
 {
 }

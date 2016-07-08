@@ -65,7 +65,7 @@ bool CudaGLGraphicsResourcePrivate::create(GLuint index) {
 
 void CudaGLGraphicsResourcePrivate::destroy() {
     if (resource) {
-        std::cout << "Free Resource Func" << std::endl;
+        std::cout << "Destroy CUDA graphics resource" << std::endl;
         GraphicsInteroperability::unregisterGraphicsResource(&resource);
     }
 }

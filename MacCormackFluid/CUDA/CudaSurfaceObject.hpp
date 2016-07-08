@@ -19,7 +19,10 @@ public:
 public:
     CudaSurfaceObject();
     explicit CudaSurfaceObject(ResourceType type);
+    CudaSurfaceObject(CudaSurfaceObject&& other);
     ~CudaSurfaceObject();
+
+    CudaSurfaceObject& operator = (CudaSurfaceObject&& other);
 
 public:
     void setResourceType(ResourceType type);
@@ -30,7 +33,8 @@ public:
 
     void destroy();
 
-    cudaSurfaceObject_t getSurf() const;
+    /* Return opaque surface object to pass into the CUDA kernel */
+    cudaSurfaceObject_t getId() const;
 
 private:
     DECLARE_PRIVATE(CudaSurfaceObject)
