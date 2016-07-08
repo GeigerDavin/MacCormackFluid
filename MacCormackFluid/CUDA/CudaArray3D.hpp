@@ -91,6 +91,20 @@ public:
         checkCudaError(cudaMemcpy3D(&copyParams));
     }
 
+    void setData(void* data) {
+        if (!isCreated()) {
+            return;
+        }
+
+        cudaMemcpy3DParms copyParams = { 0 };
+        copyParams.srcPtr = MemoryManagement::createCudaPitchedPtr
+            (data, extent.width * sizeof(T), extent.width, extent.height);
+        copyParams.dstArray = array;
+        copyParams.extent = extent;
+        copyParams.kind = cudaMemcpyHostToDevice;
+        checkCudaError(cudaMemcpy3D(&copyParams));
+    }
+
     bool isCreated() const {
         return (array != nullptr);
     }
@@ -104,22 +118,20 @@ public:
     }
 
     //http://stackoverflow.com/questions/16107480/copying-from-cuda-3d-memory-to-linear-memory-copied-data-is-not-where-i-expecte
-    const T* getHostData() const {
+    void getHostData(T** data) const {
         if (!isCreated()) {
-            return nullptr;
+            return;
         }
 
-        T* data = (T *) MemoryManagement::mallocHost(extent.width *
-                                                     extent.height *
-                                                     extent.depth *
-                                                     sizeof(T));
         cudaMemcpy3DParms copyParams = { 0 };
         copyParams.srcArray = array;
-        copyParams.dstPtr = data;
+        copyParams.dstPtr.ptr = *data;
+        copyParams.dstPtr.pitch = extent.width * sizeof(T);
+        copyParams.dstPtr.xsize = extent.width;
+        copyParams.dstPtr.ysize = extent.height;
         copyParams.extent = extent;
         copyParams.kind = cudaMemcpyDeviceToHost;
         checkCudaError(cudaMemcpy3D(&copyParams));
-        return data;
     }
 
 private:

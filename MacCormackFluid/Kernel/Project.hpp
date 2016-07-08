@@ -12,6 +12,10 @@ __global__ static void project3D(cudaSurfaceObject_t speedInSurf,
         return;
     }
 
+//    if (tid.x == 0 && tid.y == 0 && tid.z == 0) {
+//    	printf("%f\n", deviceConstant.mouse.x);
+//    }
+
     uint3 j = make_uint3(0, 0, 0);
 
     j = make_uint3(max(tid.x - 1, 0), tid.y, tid.z);

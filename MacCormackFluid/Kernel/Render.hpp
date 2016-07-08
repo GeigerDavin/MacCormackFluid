@@ -124,8 +124,10 @@ __global__ static void renderVolume(cudaTextureObject_t speedSizeInTex,
         m = fmaxf(m, s);
     }
 
-    float4 color = (steps > 100) ? (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(1.41f, 1.41f, 1.0f, 1.41f), m / 3.0f))
-                                 : (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(0.0f, 1.41f, 1.0f, 1.41f), m / 3.0f));
+    float4 color = (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(1.41f, 1.41f, 1.0f, 1.41f), m / 3.0f));
+    //float4 color = (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(0.0f, 1.41f, 1.0f, 1.41f), m / 3.0f));
+
+    //float4 color = make_float4(0.1,0.2,0.3,0.1);
 
 #if USE_TEXTURE_2D
     surf2Dwrite(color, viewOutput, tid.x * sizeof(float4), tid.y);

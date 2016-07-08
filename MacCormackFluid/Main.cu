@@ -21,16 +21,28 @@
 #include "Kernel/Project.hpp"
 #include "Kernel/Render.hpp"
 
+
+#include <chrono>
+#include "MPI/SharedMatrixZPlanes.hpp"
+
+	        //const float4* test = speedArray[0].getHostData();
+	        //for (uint i = 0; i < 10; i++) {
+	        //    if (test) {
+	        //        std::cout << test[i].x << " " << test[i].y << " " << test[i].z << " " << test[i].w << std::endl;
+	        //    }
+	        //}
+
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 int width = WINDOW_WIDTH;
 int height = WINDOW_HEIGHT;
 GLFWwindow* mainWindow = nullptr;
 
-#define DIMXYZ 150
+#define DIMXYZ 100
 const int dimX = DIMXYZ;
 const int dimY = DIMXYZ;
 const int dimZ = DIMXYZ;
+
 const float sphereRadius = 3.0f;
 
 int viewOrientation = 0;
@@ -52,11 +64,14 @@ float zoom = 1.2f;
 
 Utils::TrackSphere trackSphere;
 
+float elapsedTime = 0;
+Utils::Timer* timer = nullptr;
+
 ////////////////////////////////////////////////////////////////////////////////
 // CUDA Arrays pointing to the GPU residing data, must be accessed by textures and surfaces
 ////////////////////////////////////////////////////////////////////////////////
 CUDA::CudaArray3D<float4> speedArray[3];
-CUDA::CudaArray3D<float> speedSizeArray;
+CUDA::CudaArray3D<float> speedSizeArrayWorker;
 CUDA::CudaArray3D<float4> pressureArray[2];
 CUDA::CudaArray3D<float4> divergenceArray;
 
@@ -64,7 +79,7 @@ CUDA::CudaArray3D<float4> divergenceArray;
 // Surfaces for writing to and reading from without linear interpolation and multisampling
 ////////////////////////////////////////////////////////////////////////////////
 CUDA::CudaSurfaceObject speedSurface[3];
-CUDA::CudaSurfaceObject speedSizeSurface;
+CUDA::CudaSurfaceObject speedSizeSurfaceWorker;
 CUDA::CudaSurfaceObject pressureSurface[2];
 CUDA::CudaSurfaceObject divergenceSurface;
 
@@ -72,31 +87,48 @@ CUDA::CudaSurfaceObject divergenceSurface;
 // Read-only textures for reading from with linear interpolation and multisampling
 ////////////////////////////////////////////////////////////////////////////////
 CUDA::CudaTextureObject speedTexture[3];
-CUDA::CudaTextureObject speedSizeTexture;
+CUDA::CudaTextureObject speedSizeTextureWorker;
 CUDA::CudaTextureObject pressureTexture[2];
 CUDA::CudaTextureObject divergenceTexture;
 
-#if USE_TEXTURE_2D
- GLuint viewGLTexture;
- cudaGraphicsResource_t viewGraphicsResource;
-#else
+////////////////////////////////////////////////////////////////////////////////
+// View output
+////////////////////////////////////////////////////////////////////////////////
+//#if USE_TEXTURE_2D
+// GLuint viewGLTexture;
+// cudaGraphicsResource_t viewGraphicsResource;
+//#else
+
+CUDA::CudaArray3D<float> speedSizeArrayMaster;
+CUDA::CudaSurfaceObject speedSizeSurfaceMaster;
+CUDA::CudaTextureObject speedSizeTextureMaster;
+
+SharedMatrix<float>* speedSizeOutput = nullptr;
  OpenGL::OpenGLBuffer rgbaBuffer;
  CUDA::CudaGLGraphicsResource rgbaGraphicsResource;
-#endif
+//#endif
 
-float elapsedTime = 0;
-Utils::Timer* timer = nullptr;
+////////////////////////////////////////////////////////////////////////////////
+// MPI
+////////////////////////////////////////////////////////////////////////////////
+int world_size;
+int world_rank;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Forward declarations
 ////////////////////////////////////////////////////////////////////////////////
+void master();
+void slave();
+
 bool initializeGL();
 bool createVolumes();
+bool createSpeedSizeVolumeWorker();
+bool createSpeedSizeVolumeMaster();
 bool createViewOutput();
 
 void updateConstants();
-void runKernels();
-void render();
+void updateVolumes();
+void renderVolumes();
 
 void cleanup();
 
@@ -108,68 +140,124 @@ static void windowResizeClb(GLFWwindow* window, int width, int height);
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
-int main() {
+int main(int argc, char *argv[]) {
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+	hostConstant.running = true;
+
+	speedSizeOutput = new SharedMatrix_ZPlanes<float>(world_rank, world_size, dimX, dimY, dimZ);
+	std::cout << "Worker Size " << world_rank << ": " << speedSizeOutput->getWorkerMatX() << " " << speedSizeOutput->getWorkerMatY() << " " << speedSizeOutput->getWorkerMatZ() << std::endl;
+
     CUDA::DeviceManagement::initializeCuda(true);
     if (!CUDA::useCuda) {
         std::cerr << "CPU only not supported" << std::endl;
         cleanup();
-        return EXIT_FAILURE;
+        return false;
+    } else {
+    	std::cerr << "Worker " << world_rank << ": " << "CUDA initialized" << std::endl;
     }
-    if (!initializeGL()) {
-        cleanup();
-        return EXIT_FAILURE;
-    }
-    if (!createVolumes()) {
-        cleanup();
-        return EXIT_FAILURE;
-    }
-    if (!createViewOutput()) {
-        cleanup();
-        return EXIT_FAILURE;
-    }
+
     if (Utils::TimerSDK::createTimer(&timer)) {
         std::cout << "Timer successfully created" << std::endl;
     } else {
         cleanup();
-        return EXIT_FAILURE;
+        return false;
     }
 
-    while (!glfwWindowShouldClose(mainWindow)) {
-        updateConstants();
-        runKernels();
-        render();
+	if (world_rank == MPI_MASTER) {
+		master();
+	} else {
+		slave();
+	}
 
-        glfwSwapInterval(0);
-        glfwSwapBuffers(mainWindow);
-        glfwPollEvents();
-
-        if (glfwGetKey(mainWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(mainWindow, true);
-        }
-
-        float dt = Utils::TimerSDK::getTimerValue(&timer);
-        elapsedTime += dt;
-        if (elapsedTime >= 1000) {
-            char title[256];
-            sprintf(title, "MacCormack      Delta Time: %.2fms       Average Time: %.2fms        Total Time: %.0fms       %.0fFPS",
-                dt,
-                Utils::TimerSDK::getAverageTimerValue(&timer),
-                Utils::TimerSDK::getTotalTimerValue(&timer),
-                (float) (elapsedTime / dt));
-            glfwSetWindowTitle(mainWindow, title);
-            elapsedTime = 0;
-        }
-
-        //const float4* test = speedArray[0].getHostData();
-        //for (uint i = 0; i < 10; i++) {
-        //    if (test) {
-        //        std::cout << test[i].x << " " << test[i].y << " " << test[i].z << " " << test[i].w << std::endl;
-        //    }
-        //}
-    }
+	if(speedSizeOutput)
+		delete speedSizeOutput;
 
     cleanup();
+    MPI_Finalize();
     return EXIT_SUCCESS;
+}
+
+void master() {
+    if (!createSpeedSizeVolumeMaster()) {
+    	cleanup();
+    	return;
+    }
+	if (!initializeGL()) {
+		cleanup();
+		return;
+	}
+    if (!createViewOutput()) {
+    	cleanup();
+    	return;
+    }
+
+    MPI_Status status;
+	while (hostConstant.running) {
+		if (glfwGetKey(mainWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			glfwSetWindowShouldClose(mainWindow, true);
+			hostConstant.running = false;
+		}
+
+		std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+		updateConstants();
+		MPI_Bcast(&hostConstant, sizeof(Constant), MPI_BYTE, MPI_MASTER, MPI_COMM_WORLD);
+		CUDA::MemoryManagement::moveHostToSymbol(deviceConstant, hostConstant);
+
+		speedSizeOutput->startMergeMasterMatrixAsync();
+		speedSizeOutput->waitMergeMasterMatrixAsyncFinish();
+
+		renderVolumes();
+
+		glfwSwapInterval(0);
+		glfwSwapBuffers(mainWindow);
+		glfwPollEvents();
+
+		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
+		//float dt = Utils::TimerSDK::getTimerValue(&timer);
+		float dt = (float) duration;
+		elapsedTime += dt;
+		if (true) {
+			char title[256];
+			sprintf(title, "MacCormack      Delta Time: %.2fms       Average Time: %.2fms        Total Time: %.0fms       %.0fFPS",
+				(float) duration,
+				Utils::TimerSDK::getAverageTimerValue(&timer),
+				Utils::TimerSDK::getTotalTimerValue(&timer),
+				(float) (elapsedTime / dt));
+			glfwSetWindowTitle(mainWindow, title);
+			elapsedTime = 0;
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+	}
+}
+
+void slave() {
+    if (!createVolumes()) {
+    	cleanup();
+    	return;
+    }
+    if (!createSpeedSizeVolumeWorker()) {
+    	cleanup();
+    	return;
+    }
+
+	while (hostConstant.running) {
+		MPI_Bcast(&hostConstant, sizeof(Constant), MPI_BYTE, MPI_MASTER, MPI_COMM_WORLD);
+		//printf("%f\n", hostConstant.mouse.x);
+		CUDA::MemoryManagement::moveHostToSymbol(deviceConstant, hostConstant);
+
+		updateVolumes();
+		speedSizeOutput->startMergeMasterMatrixAsync();
+		//speedSizeOutput->startExchangeGhostCells();
+		speedSizeOutput->waitMergeMasterMatrixAsyncFinish();
+		//speedSizeOutput->waitExchangeGhostCellsFinish();
+		//MPI_Barrier(MPI_COMM_WORLD);
+	}
 }
 
 namespace {
@@ -218,7 +306,7 @@ bool initializeGL() {
 bool createVolumes() {
     // Speed (vectorial)
     for (int i = 0; i < 3; i++) {
-        speedArray[i].create(dimX, dimY, dimZ);
+        speedArray[i].create(speedSizeOutput->getWorkerMatX(), speedSizeOutput->getWorkerMatY(), speedSizeOutput->getWorkerMatZ());
         speedTexture[i].setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
         speedTexture[i].setNormalized(true);
         if (speedTexture[i].create(speedArray[i].get())) {
@@ -233,24 +321,9 @@ bool createVolumes() {
         }
     }
 
-    // Speed size (scalar)
-    speedSizeArray.create(dimX, dimY, dimZ);
-    speedSizeTexture.setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
-    speedSizeTexture.setNormalized(true);
-    if (speedSizeTexture.create(speedSizeArray.get())) {
-        std::cout << "Speed size texture object " << speedSizeTexture.getId() << " successfully created" << std::endl;
-    } else {
-        return false;
-    }
-    if (speedSizeSurface.create(speedSizeArray.get())) {
-        std::cout << "Speed size surface object " << speedSizeSurface.getId() << " successfully created" << std::endl;
-    } else {
-        return false;
-    }
-
     // Pressure (vectorial)
     for (int i = 0; i < 2; i++) {
-        pressureArray[i].create(dimX, dimY, dimZ);
+        pressureArray[i].create(speedSizeOutput->getWorkerMatX(), speedSizeOutput->getWorkerMatY(), speedSizeOutput->getWorkerMatZ());
         pressureTexture[i].setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
         pressureTexture[i].setNormalized(true);
         if (pressureTexture[i].create(pressureArray[i].get())) {
@@ -266,7 +339,7 @@ bool createVolumes() {
     }
 
     // Divergence (vectorial)
-    divergenceArray.create(dimX, dimY, dimZ);
+    divergenceArray.create(speedSizeOutput->getWorkerMatX(), speedSizeOutput->getWorkerMatY(), speedSizeOutput->getWorkerMatZ());
     divergenceTexture.setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
     divergenceTexture.setNormalized(true);
     if (divergenceTexture.create(divergenceArray.get())) {
@@ -276,6 +349,46 @@ bool createVolumes() {
     }
     if (divergenceSurface.create(divergenceArray.get())) {
         std::cout << "Divergence surface object " << divergenceSurface.getId() << " successfully created" << std::endl;
+    } else {
+        return false;
+    }
+
+    std::cout << std::endl;
+    return true;
+}
+
+bool createSpeedSizeVolumeWorker() {
+    // Speed size (scalar)
+    speedSizeArrayWorker.create(speedSizeOutput->getWorkerMatX(), speedSizeOutput->getWorkerMatY(), speedSizeOutput->getWorkerMatZ());
+    speedSizeTextureWorker.setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
+    speedSizeTextureWorker.setNormalized(true);
+    if (speedSizeTextureWorker.create(speedSizeArrayWorker.get())) {
+        std::cout << "Speed size texture object worker " << speedSizeTextureWorker.getId() << " successfully created" << std::endl;
+    } else {
+        return false;
+    }
+    if (speedSizeSurfaceWorker.create(speedSizeArrayWorker.get())) {
+        std::cout << "Speed size surface object worker " << speedSizeSurfaceWorker.getId() << " successfully created" << std::endl;
+    } else {
+        return false;
+    }
+
+    std::cout << std::endl;
+    return true;
+}
+
+bool createSpeedSizeVolumeMaster() {
+    // Speed size (scalar)
+    speedSizeArrayMaster.create(speedSizeOutput->getMasterMatX(), speedSizeOutput->getMasterMatY(), speedSizeOutput->getMasterMatZ());
+    speedSizeTextureMaster.setFilterMode(CUDA::CudaTextureObject::FilterMode::LinearFilter);
+    speedSizeTextureMaster.setNormalized(true);
+    if (speedSizeTextureMaster.create(speedSizeArrayMaster.get())) {
+        std::cout << "Speed size texture object master " << speedSizeTextureMaster.getId() << " successfully created" << std::endl;
+    } else {
+        return false;
+    }
+    if (speedSizeSurfaceMaster.create(speedSizeArrayMaster.get())) {
+        std::cout << "Speed size surface object master " << speedSizeSurfaceMaster.getId() << " successfully created" << std::endl;
     } else {
         return false;
     }
@@ -311,7 +424,6 @@ bool createViewOutput() {
 }
 
 void updateConstants() {
-    Constant hostConstant = {0};
     hostConstant.volumeSize.x = dimX;
     hostConstant.volumeSize.y = dimY;
     hostConstant.volumeSize.z = dimZ;
@@ -344,8 +456,6 @@ void updateConstants() {
         hostConstant.rotation.m[i].z = rot(i, 2);
     }
     hostConstant.zoom = zoom;
-
-    CUDA::MemoryManagement::moveHostToSymbol(deviceConstant, hostConstant);
 }
 
 template <class Resource>
@@ -355,7 +465,7 @@ void swap(Resource& res1, Resource& res2) {
     res2 = std::move(res);
 }
 
-void runKernels() {
+void updateVolumes() {
     //checkCudaError(cudaGraphicsMapResources(1, &viewGraphicsResource));
     //cudaArray_t viewCudaArray;
     //checkCudaError(cudaGraphicsSubResourceGetMappedArray(&viewCudaArray, viewGraphicsResource, 0, 0));
@@ -364,10 +474,15 @@ void runKernels() {
     //viewCudaArrayResourceDesc.res.array.array = viewCudaArray;
     //cudaSurfaceObject_t viewCudaSurfaceObject;
     //checkCudaError(cudaCreateSurfaceObject(&viewCudaSurfaceObject, &viewCudaArrayResourceDesc));
+
     Utils::TimerSDK::startTimer(&timer);
 
+	int x = speedSizeOutput->getWorkerMatX();
+	int y = speedSizeOutput->getWorkerMatY();
+	int z = speedSizeOutput->getWorkerMatZ() / 2;
+
     dim3 blockSize(16, 4, 4);
-    dim3 gridSize((dimX + 15) / 16, dimY / 4, dimZ / 4);
+    dim3 gridSize((x + 15) / 16, y / 4, z / 4);
 
     Kernel::advect3D<<<gridSize, blockSize>>>(speedTexture[0].getId(),              // Input 0
                                               speedSurface[0].getId(),              // Input 0
@@ -393,13 +508,13 @@ void runKernels() {
     getLastCudaError("renderSphere kernel failed");
     //CUDA::DeviceManagement::deviceSync();
 
-    gridSize = dim3((dimX + 63) / 64, dimY / 4, dimZ / 4);
+    gridSize = dim3((x + 63) / 64, y / 4, z / 4);
     Kernel::divergence3D<<<gridSize, blockSize>>>(speedSurface[0].getId(),          // Input 0
                                                   divergenceSurface.getId());       // Output
     getLastCudaError("divergence3D kernel failed");
     //CUDA::DeviceManagement::deviceSync();
 
-    gridSize = dim3((dimX + 63) / 64, dimY / 4, dimZ / 4);
+    gridSize = dim3((x + 63) / 64, y / 4, z / 4);
     for (int i = 0; i < 10; i++) {
         Kernel::jacobi3D<<<gridSize, blockSize>>>(pressureSurface[1].getId(),
                                                   divergenceSurface.getId(),
@@ -414,35 +529,46 @@ void runKernels() {
         //CUDA::DeviceManagement::deviceSync();
     }
 
-    gridSize = dim3((dimX + 63) / 64, dimY / 4, dimZ / 4);
+    gridSize = dim3((x + 63) / 64, y / 4, z / 4);
     Kernel::project3D<<<gridSize, blockSize>>>(speedSurface[0].getId(),             // Input 0
                                                pressureSurface[1].getId(),          // Input 1
                                                speedSurface[1].getId(),             // Output 1
-                                               speedSizeSurface.getId());           // Output
+                                               speedSizeSurfaceWorker.getId());           // Output
     getLastCudaError("project3D kernel failed");
-    //CUDA::DeviceManagement::deviceSync();
-
-    uint* rgba = (uint *)rgbaGraphicsResource.map();
-    CUDA::MemoryManagement::deviceMemset(rgba, 0, width * height * 4);
-
-    blockSize = dim3(16, 16, 1);
-    gridSize = dim3((width + 15) / 16, (height + 15) / 16, 1);
-    Kernel::renderVolume<<<gridSize, blockSize>>>(speedSizeTexture.getId(),         // Input
-                                                  rgba);                            // Output
-    getLastCudaError("renderVolume kernel failed");
     //CUDA::DeviceManagement::deviceSync();
 
     //checkCudaError(cudaDestroySurfaceObject(viewCudaSurfaceObject));
     //checkCudaError(cudaGraphicsUnmapResources(1, &viewGraphicsResource));
-    rgbaGraphicsResource.unmap();
 
-    Utils::TimerSDK::stopTimer(&timer);
+    speedSizeArrayWorker.getHostData(&(speedSizeOutput->_workerMatrix));
 
     swap(speedTexture[0], speedTexture[1]);
     swap(speedSurface[0], speedSurface[1]);
+
+    Utils::TimerSDK::stopTimer(&timer);
+    std::cout << "Worker " << world_rank << ": " << Utils::TimerSDK::getTimerValue(&timer) << std::endl;
 }
 
-void render() {
+void renderVolumes() {
+	//Utils::TimerSDK::startTimer(&timer);
+
+	speedSizeArrayMaster.setData(speedSizeOutput->_masterMatrix);
+
+    uint* rgba = (uint *)rgbaGraphicsResource.map();
+    CUDA::MemoryManagement::deviceMemset(rgba, 0, width * height * 4);
+
+    dim3 blockSize = dim3(16, 16, 1);
+    dim3 gridSize = dim3((width + 15) / 16, (height + 15) / 16, 1);
+    Kernel::renderVolume<<<gridSize, blockSize>>>(speedSizeTextureMaster.getId(),  // Input
+                                                  rgba);               // Output
+    getLastCudaError("renderVolume kernel failed");
+    //CUDA::DeviceManagement::deviceSync();
+
+    rgbaGraphicsResource.unmap();
+
+    //Utils::TimerSDK::stopTimer(&timer);
+    //std::cout << "Worker " << world_rank << ": " << Utils::TimerSDK::getTimerValue(&timer) << std::endl;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -452,25 +578,25 @@ void render() {
     glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     rgbaBuffer.release();
 #else
-    //rgbaBuffer.bind();
-    //glBindTexture(GL_TEXTURE_2D, rgbaTex);
-    //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    //rgbaBuffer.release();
+    rgbaBuffer.bind();
+    glBindTexture(GL_TEXTURE_2D, rgbaTex);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    rgbaBuffer.release();
 
-    //glEnable(GL_TEXTURE_2D);
-    //glBegin(GL_QUADS);
-    //glTexCoord2f(0, 0);
-    //glVertex2f(0, 0);
-    //glTexCoord2f(1, 0);
-    //glVertex2f(1, 0);
-    //glTexCoord2f(1, 1);
-    //glVertex2f(1, 1);
-    //glTexCoord2f(0, 1);
-    //glVertex2f(0, 1);
-    //glEnd();
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(0, 0);
+    glTexCoord2f(1, 0);
+    glVertex2f(1, 0);
+    glTexCoord2f(1, 1);
+    glVertex2f(1, 1);
+    glTexCoord2f(0, 1);
+    glVertex2f(0, 1);
+    glEnd();
 
-    //glDisable(GL_TEXTURE_2D);
-    //glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindTexture(GL_TEXTURE_2D, viewGLTexture);
     glBegin(GL_QUADS);
@@ -491,7 +617,8 @@ void cleanup() {
     for (int i = 0; i < 3; i++) {
         speedTexture[i].destroy();
     }
-    speedSizeTexture.destroy();
+    speedSizeTextureWorker.destroy();
+    speedSizeTextureMaster.destroy();
     for (int i = 0; i < 2; i++) {
         pressureTexture[i].destroy();
     }
@@ -502,7 +629,8 @@ void cleanup() {
     for (int i = 0; i < 3; i++) {
         speedSurface[i].destroy();
     }
-    speedSizeSurface.destroy();
+    speedSizeSurfaceWorker.destroy();
+    speedSizeSurfaceMaster.destroy();
     for (int i = 0; i < 2; i++) {
         pressureSurface[i].destroy();
     }
@@ -513,7 +641,8 @@ void cleanup() {
     for (int i = 0; i < 3; i++) {
         speedArray[i].destroy();
     }
-    speedSizeArray.destroy();
+    speedSizeArrayWorker.destroy();
+    speedSizeArrayMaster.destroy();
     for (int i = 0; i < 2; i++) {
         pressureArray[i].destroy();
     }

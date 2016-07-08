@@ -33,6 +33,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLM}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/gl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/Glu/include}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 								</option>
 								<option id="nvcc.compiler.cpp11option.1801872821" name="Enable C++11 support (-std=c++11)" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
 								<inputType id="nvcc.compiler.input.cu.1775046861" superClass="nvcc.compiler.input.cu"/>
@@ -43,9 +44,11 @@
 								<option id="nvcc.linker.option.paths.306341365" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLEW/lib64}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLFW/lib64}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/lib/"/>
 								</option>
 								<option id="nvcc.linker.option.libs.613123070" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="GL"/>
+									<listOptionValue builtIn="false" value="mpi"/>
 									<listOptionValue builtIn="false" value="glfw"/>
 									<listOptionValue builtIn="false" value="GLEW"/>
 								</option>
@@ -59,14 +62,6 @@
 								<option id="gnu.both.asm.option.include.paths.5491064" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1457934552" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
-						</toolChain>
-					</folderInfo>
-					<folderInfo id="com.nvidia.cuda.ide.on_path.configuration.debug.1642172113.1017090391" name="/" resourcePath="ThirdParty">
-						<toolChain id="com.nvidia.cuda.tools.toolchain.on_path.exe.debug.994401639" name="CUDA Toolkit on the path" superClass="com.nvidia.cuda.tools.toolchain.on_path.exe.debug" unusedChildren="">
-							<tool id="nvcc.compiler.base.1055139031" name="NVCC Compiler" superClass="nvcc.compiler.base.717953047"/>
-							<tool id="nvcc.linker.base.514267876" name="NVCC Linker" superClass="nvcc.linker.base.1276872830"/>
-							<tool id="nvcc.archiver.base.1208912682" name="NVCC Archiver" superClass="nvcc.archiver.base.735525899"/>
-							<tool id="com.nvidia.host.assembler.1334421750" name="Host Assembler" superClass="com.nvidia.host.assembler.311252922"/>
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
@@ -109,6 +104,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLEW/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLFW/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/Glu/include}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 								</option>
 								<option id="nvcc.compiler.def.symbols.100195035" name="Defined symbols (-D)" superClass="nvcc.compiler.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORCE_INLINES"/>
@@ -118,19 +114,22 @@
 								<option defaultValue="nvcc.compiler.optimization.level.most" id="nvcc.compiler.optimization.level.301633431" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.1764431501" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.cpp11option.1466784459" name="Enable C++11 support (-std=c++11)" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
+								<option id="nvcc.compiler.usefastmath.633225977" name="Make use of fast math library (-use_fast_math)" superClass="nvcc.compiler.usefastmath" value="true" valueType="boolean"/>
 								<inputType id="nvcc.compiler.input.cu.1969246940" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.1884544055" superClass="nvcc.compiler.input.cpp"/>
 								<inputType id="nvcc.compiler.input.c.1819564953" superClass="nvcc.compiler.input.c"/>
 							</tool>
 							<tool id="nvcc.linker.base.2013987286" name="NVCC Linker" superClass="nvcc.linker.base">
 								<option id="nvcc.linker.option.libs.1347824627" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="GL"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="GLEW"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="glfw"/>
+									<listOptionValue builtIn="false" value="GL"/>
+									<listOptionValue builtIn="false" value="GLEW"/>
+									<listOptionValue builtIn="false" value="glfw"/>
+									<listOptionValue builtIn="false" value="mpi"/>
 								</option>
 								<option id="nvcc.linker.option.paths.1744282857" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLEW/lib64}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLFW/lib64}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/lib/"/>
 								</option>
 								<inputType id="nvcc.linker.input.455657082" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

@@ -19,8 +19,11 @@ struct __align__(128) Constant {
 
     float zoom;
     int smoky;
+
+    bool running;
 };
 
+static Constant hostConstant;
 __constant__ static Constant deviceConstant;
 
 #endif
