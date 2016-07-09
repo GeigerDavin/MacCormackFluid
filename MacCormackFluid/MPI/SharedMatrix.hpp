@@ -5,14 +5,9 @@
 
 template<typename T> class SharedMatrix {
 public:
-
 	SharedMatrix(int mpiRank, int mpiSize, int matX, int matY, int matZ) :
-			_mpiRank(mpiRank), _mpiSize(mpiSize), _matX(matX), _matY(matY), _matZ(matZ) {
-
-	}
-	virtual ~SharedMatrix() {
-	}
-	;
+		_mpiRank(mpiRank), _mpiSize(mpiSize), _matX(matX), _matY(matY), _matZ(matZ) {}
+	virtual ~SharedMatrix() {};
 
 	virtual bool doIParticipate() = 0;
 
@@ -37,12 +32,16 @@ public:
 	virtual int getWorkerMatY() = 0;
 	virtual int getWorkerMatZ() = 0;
 
+	virtual int getWorkerOffsetX() = 0;
+	virtual int getWorkerOffsetY() = 0;
+	virtual int getWorkerOffsetZ() = 0;
+
 	virtual T* getMasterMatrix();
 	virtual int getMasterMatX();
 	virtual int getMasterMatY();
 	virtual int getMasterMatZ();
 
-//protected:
+protected:
 	const int _mpiRank = 0;
 	const int _mpiSize = 0;
 
@@ -62,13 +61,17 @@ template<typename T> T* SharedMatrix<T>::getWorkerMatrix() {
 template<typename T> T* SharedMatrix<T>::getMasterMatrix() {
 	return _masterMatrix;
 }
+
 template<typename T> int SharedMatrix<T>::getMasterMatX() {
 	return _matX;
 }
+
 template<typename T> int SharedMatrix<T>::getMasterMatY() {
 	return _matY;
 }
+
 template<typename T> int SharedMatrix<T>::getMasterMatZ() {
 	return _matZ;
 }
+
 #endif //SHAREDMATRIX_HPP
