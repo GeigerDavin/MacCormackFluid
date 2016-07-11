@@ -85,7 +85,7 @@ public:
 
     void* map(OpenGLBuffer::Access access) const;
     void* mapRange(int offset, int count, OpenGLBuffer::RangeAccessFlag access) const;
-    bool unmap();
+    bool unmap() const;
 
 private:
     DECLARE_PRIVATE(OpenGLBuffer)

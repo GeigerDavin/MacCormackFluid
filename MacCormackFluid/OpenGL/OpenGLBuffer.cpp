@@ -31,6 +31,7 @@ public:
 
 namespace {
     void freeBufferFunc(GLuint id) {
+        std::cout << "Destroy OpenGL buffer " << id << std::endl;
         glDeleteBuffers(1, &id);
     }
 }
@@ -241,7 +242,7 @@ void* OpenGLBuffer::mapRange(int offset, int count, OpenGLBuffer::RangeAccessFla
     }
 }
 
-bool OpenGLBuffer::unmap() {
+bool OpenGLBuffer::unmap() const {
     if (isCreated()) {
         D(const OpenGLBuffer);
         return glUnmapBuffer(d->type) == GL_TRUE;

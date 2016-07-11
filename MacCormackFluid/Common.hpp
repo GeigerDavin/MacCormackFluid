@@ -1,6 +1,10 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#ifndef NOEXCEPT
+# define NOEXCEPT throw()
+#endif
+
 #define DISABLE_COPY(Class)                                                         \
     private:                                                                        \
         Class(const Class &) = delete;                                              \
@@ -37,17 +41,16 @@ template <class Wrapper> static inline typename Wrapper::pointer getPtrHelper
 #ifndef PI
 # define PI 3.14159265f
 #endif
-#ifndef THREADS
-# define THREADS 32
-#endif
 
-#define xyz float4
-#define make_xyz(x, y, z) make_float4(x, y, z, 0)
-#define make_xyzw(x, y, z, w) make_float4(x, y, z, w)
+#define TID                                                                         \
+    uint3 tid = make_uint3(blockIdx.x * blockDim.x + threadIdx.x,                   \
+                           blockIdx.y * blockDim.y + threadIdx.y,                   \
+                           blockIdx.z * blockDim.z + threadIdx.z)
 
-#define TIDX(count) \
-    const uint tidX = blockIdx.x * blockDim.x + threadIdx.x; \
-    if (tidX >= count) return
+#define TID_CONST                                                                   \
+    const uint3 tid = make_uint3(blockIdx.x * blockDim.x + threadIdx.x,             \
+                                 blockIdx.y * blockDim.y + threadIdx.y,             \
+                                 blockIdx.z * blockDim.z + threadIdx.z)
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
@@ -56,10 +59,12 @@ typedef unsigned long long ulonglong;
 typedef std::string String;
 
 #define HINLINE __host__ inline
-#define DINLINE __device__ __forceinline__
-#define HDINLINE __device__ __host__ __forceinline__
+#define DINLINE __forceinline__ __device__
+#define HDINLINE __forceinline__ __device__ __host__
 
 #define _delete(Var) if((Var)) { delete (Var); Var = NULL; }
 #define _assert(Expression) if (!Expression) std::cout << "Assertion failed for" << #Expression
+
+#define CUDA_BOUNDARY_MODE cudaBoundaryModeZero
 
 #endif
