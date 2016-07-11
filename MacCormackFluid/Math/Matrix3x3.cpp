@@ -1,9 +1,9 @@
 #include "../StdAfx.hpp"
-#include "Algebra.hpp"
+#include "Matrix3x3.hpp"
 
-namespace Utils {
+namespace Math {
 
-void Mat3::identity() {
+void Matrix3x3::identity() {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             m[j][i] = 0;
@@ -14,8 +14,8 @@ void Mat3::identity() {
     m[2][2] = 1;
 }
 
-Mat3 Mat3::operator * (Mat3& m2) const {
-    Mat3 res;
+Matrix3x3 Matrix3x3::operator * (Matrix3x3& m2) const {
+    Matrix3x3 res;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             res(j, i) = 0;
@@ -27,15 +27,15 @@ Mat3 Mat3::operator * (Mat3& m2) const {
     return res;
 }
 
-float& Mat3::operator () (int row, int col) {
+float& Matrix3x3::operator () (int row, int col) {
     return m[row][col];
 }
 
-Mat3::operator float * () {
+Matrix3x3::operator float * () {
     return &m[0][0];
 }
 
-void Mat3::rotateAroundAxis(float xa, float ya, float za, float angle) {
+void Matrix3x3::rotateAroundAxis(float xa, float ya, float za, float angle) {
     float t = sqrt(xa * xa + ya * ya + za * za);
     if (t != 0) {
         xa/=t;
@@ -57,4 +57,4 @@ void Mat3::rotateAroundAxis(float xa, float ya, float za, float angle) {
     m[2][1] = -xa*sin(angle) + (1 - cos(angle))*ya*za;
 }
 
-} // namespace Utils
+} // namespace Math

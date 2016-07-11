@@ -3,10 +3,11 @@
 
 namespace Kernel {
 
+// Compute speed divergence, by sampling speed at 'pos - dt * speed' position
 __global__ void divergence3D(cudaSurfaceObject_t speedInSurf,
                              cudaSurfaceObject_t divergenceOutSurf) {
-    TID;
-    if (tid.x >= deviceConstant.volumeSize.x / 4) {
+    TID_CONST;
+    if (tid.x >= volumeSizeDev.x / 4) {
         return;
     }
     

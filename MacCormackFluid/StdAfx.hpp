@@ -2,6 +2,7 @@
 #define STD_AFX_HPP
 
 #include <string>
+#include <cstring>
 #include <list>
 #include <vector>
 #include <iostream>
@@ -17,13 +18,9 @@
 #include <device_functions.h>
 #include <device_launch_parameters.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/transform.hpp>
-
 #include "Common.hpp"
-#include "Constant.hpp"
+#include "SharedData.hpp"
 #include "Math/VectorTypes.hpp"
+#include "CUDA/CudaDeviceContext.hpp"
 
 #endif

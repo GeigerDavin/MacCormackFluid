@@ -21,13 +21,14 @@ public:
 	virtual void waitExchangeGhostCellsFinish() = 0;
 
 	virtual bool haveGhostCellsXLeft() = 0;
-	virtual bool haveGhostCellsX() = 0;
+	virtual bool haveGhostCellsXRight() = 0;
 	virtual bool haveGhostCellsYLeft() = 0;
 	virtual bool haveGhostCellsYRight() = 0;
 	virtual bool haveGhostCellsZLeft() = 0;
 	virtual bool haveGhostCellsZRight() = 0;
 
 	virtual T* getWorkerMatrix();
+	virtual T**  getWorkerMatrixPointer();
 	virtual int getWorkerMatX() = 0;
 	virtual int getWorkerMatY() = 0;
 	virtual int getWorkerMatZ() = 0;
@@ -37,6 +38,7 @@ public:
 	virtual int getWorkerOffsetZ() = 0;
 
 	virtual T* getMasterMatrix();
+	virtual T** getMasterMatrixPointer();
 	virtual int getMasterMatX();
 	virtual int getMasterMatY();
 	virtual int getMasterMatZ();
@@ -57,9 +59,15 @@ public:
 template<typename T> T* SharedMatrix<T>::getWorkerMatrix() {
 	return _workerMatrix;
 }
-
+template<typename T>  T**  SharedMatrix<T>::getWorkerMatrixPointer()
+{
+	return &_workerMatrix;
+}
 template<typename T> T* SharedMatrix<T>::getMasterMatrix() {
 	return _masterMatrix;
+}
+template<typename T> T** SharedMatrix<T>::getMasterMatrixPointer() {
+	return &_masterMatrix;
 }
 
 template<typename T> int SharedMatrix<T>::getMasterMatX() {

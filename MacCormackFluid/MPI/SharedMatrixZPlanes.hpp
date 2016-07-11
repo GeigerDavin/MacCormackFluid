@@ -30,7 +30,7 @@ public:
 	void waitExchangeGhostCellsFinish() override;
 
 	bool haveGhostCellsXLeft() override;
-	bool haveGhostCellsX() override;
+	bool haveGhostCellsXRight() override;
 	bool haveGhostCellsYLeft() override;
 	bool haveGhostCellsYRight() override;
 	bool haveGhostCellsZLeft() override;
@@ -253,7 +253,7 @@ template<typename T> bool SharedMatrix_ZPlanes<T>::haveGhostCellsXLeft() {
 	return false;
 }
 
-template<typename T> bool SharedMatrix_ZPlanes<T>::haveGhostCellsX() {
+template<typename T> bool SharedMatrix_ZPlanes<T>::haveGhostCellsXRight() {
 	return false;
 }
 

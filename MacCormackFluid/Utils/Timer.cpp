@@ -4,13 +4,12 @@
 #include "LinuxTimer.hpp"
 #include "WindowsTimer.hpp"
 #include "../CUDA/CudaEventTimer.hpp"
-#include "../CUDA/Modules/DeviceManagement.hpp"
 
 namespace Utils {
 namespace TimerSDK {
 
 bool createTimer(Timer** timer) {
-    if (CUDA::useCuda) {
+    if (Ctx->isCreated()) {
         *timer = (Timer *) new CUDA::CudaEventTimer;
     } else {
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)

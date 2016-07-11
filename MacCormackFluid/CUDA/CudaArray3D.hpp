@@ -117,7 +117,6 @@ public:
         }
     }
 
-    //http://stackoverflow.com/questions/16107480/copying-from-cuda-3d-memory-to-linear-memory-copied-data-is-not-where-i-expecte
     void getHostData(T** data) const {
         if (!isCreated()) {
             return;

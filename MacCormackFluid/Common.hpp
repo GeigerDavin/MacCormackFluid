@@ -47,6 +47,11 @@ template <class Wrapper> static inline typename Wrapper::pointer getPtrHelper
                            blockIdx.y * blockDim.y + threadIdx.y,                   \
                            blockIdx.z * blockDim.z + threadIdx.z)
 
+#define TID_CONST                                                                   \
+    const uint3 tid = make_uint3(blockIdx.x * blockDim.x + threadIdx.x,             \
+                                 blockIdx.y * blockDim.y + threadIdx.y,             \
+                                 blockIdx.z * blockDim.z + threadIdx.z)
+
 typedef unsigned int uint;
 typedef unsigned char uchar;
 typedef unsigned long ulong;
@@ -54,13 +59,12 @@ typedef unsigned long long ulonglong;
 typedef std::string String;
 
 #define HINLINE __host__ inline
-#define DINLINE __device__ __forceinline__
-#define HDINLINE __device__ __host__ __forceinline__
+#define DINLINE __forceinline__ __device__
+#define HDINLINE __forceinline__ __device__ __host__
 
 #define _delete(Var) if((Var)) { delete (Var); Var = NULL; }
 #define _assert(Expression) if (!Expression) std::cout << "Assertion failed for" << #Expression
 
 #define CUDA_BOUNDARY_MODE cudaBoundaryModeZero
-#define USE_TEXTURE_2D 0
 
 #endif

@@ -1,19 +1,18 @@
 #include "../../StdAfx.hpp"
 #include "SurfaceObjectManagement.hpp"
 #include "ErrorHandling.hpp"
-#include "DeviceManagement.hpp"
 
 namespace CUDA {
 namespace SurfaceObjectManagement {
 
 void createSurfaceObject(cudaSurfaceObject_t* surf, const cudaResourceDesc* resDesc) {
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaCreateSurfaceObject(surf, resDesc));
     }
 }
 
 void destroySurfaceObject(cudaSurfaceObject_t surf) {
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaDestroySurfaceObject(surf));
     }
 }

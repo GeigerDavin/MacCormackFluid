@@ -5,6 +5,8 @@
 
 #include "../Utils/ResourceGuard.hpp"
 
+#include <cstring>
+
 namespace CUDA {
 
 class CudaSurfaceObjectPrivate {

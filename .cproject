@@ -104,7 +104,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLEW/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLFW/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/Glu/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include"/>
 								</option>
 								<option id="nvcc.compiler.def.symbols.100195035" name="Defined symbols (-D)" superClass="nvcc.compiler.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORCE_INLINES"/>
@@ -124,7 +124,7 @@
 									<listOptionValue builtIn="false" value="GL"/>
 									<listOptionValue builtIn="false" value="GLEW"/>
 									<listOptionValue builtIn="false" value="glfw"/>
-									<listOptionValue builtIn="false" value="mpi"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="mpi"/>
 								</option>
 								<option id="nvcc.linker.option.paths.1744282857" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/MultiProject/ThirdParty/GLEW/lib64}&quot;"/>

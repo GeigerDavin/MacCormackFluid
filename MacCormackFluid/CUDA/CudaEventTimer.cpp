@@ -1,7 +1,6 @@
 #include "../StdAfx.hpp"
 #include "CudaEventTimer.hpp"
 
-#include "Modules/DeviceManagement.hpp"
 #include "Modules/ErrorHandling.hpp"
 
 namespace CUDA {
@@ -43,14 +42,14 @@ public:
 };
 
 void CudaEventTimerPrivate::create() {
-    if (useCuda && !startEvent && !stopEvent) {
+    if (Ctx->isCreated() && !startEvent && !stopEvent) {
         checkCudaError(cudaEventCreateWithFlags(&startEvent, eventFlag));
         checkCudaError(cudaEventCreateWithFlags(&stopEvent, eventFlag));
     }
 }
 
 void CudaEventTimerPrivate::destroy() {
-    if (useCuda && startEvent && stopEvent) {
+    if (Ctx->isCreated() && startEvent && stopEvent) {
         checkCudaError(cudaEventSynchronize(startEvent));
         checkCudaError(cudaEventSynchronize(stopEvent));
         checkCudaError(cudaEventDestroy(startEvent));
@@ -63,7 +62,7 @@ void CudaEventTimerPrivate::destroy() {
 }
 
 void CudaEventTimerPrivate::start() {
-    if (useCuda && startEvent && stopEvent) {
+    if (Ctx->isCreated() && startEvent && stopEvent) {
         checkCudaError(cudaEventRecord(startEvent, stream));
         checkCudaError(cudaEventSynchronize(startEvent));
         running = true;
@@ -71,7 +70,7 @@ void CudaEventTimerPrivate::start() {
 }
 
 void CudaEventTimerPrivate::stop() {
-    if (useCuda && startEvent && stopEvent) {
+    if (Ctx->isCreated() && startEvent && stopEvent) {
         checkCudaError(cudaEventRecord(stopEvent));
         checkCudaError(cudaEventSynchronize(stopEvent));
         checkCudaError(cudaEventElapsedTime(&timeDiff, startEvent, stopEvent));

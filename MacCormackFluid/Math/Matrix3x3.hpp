@@ -1,24 +1,20 @@
-#ifndef ALGEBRA_HPP
-#define ALGEBRA_HPP
+#ifndef MATRIX3X3_HPP
+#define MATRIX3X3_HPP
 
-namespace Utils {
+namespace Math {
 
-class Mat3 {
+class Matrix3x3 {
 public:
     void identity();
-    Mat3 operator * (Mat3& m2) const;
-
+    Matrix3x3 operator * (Matrix3x3& m2) const;
     void rotateAroundAxis(float xa, float ya, float za, float angle);
-
     float& operator () (int row, int col);
-
     operator float* ();
 
 private:
     float m[3][3];
 };
 
-} // namespace Utils
-
+} // namespace Math
 
 #endif

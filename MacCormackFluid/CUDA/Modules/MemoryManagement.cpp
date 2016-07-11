@@ -1,7 +1,8 @@
 #include "../../StdAfx.hpp"
 #include "MemoryManagement.hpp"
 #include "ErrorHandling.hpp"
-#include "DeviceManagement.hpp"
+
+#include <cstring>
 
 namespace CUDA {
 namespace MemoryManagement {
@@ -24,7 +25,7 @@ namespace MemoryManagement {
     ErrorHandling::_cudaMemCheck(ptr, "CudaMipmappedArray", __FILE__, __LINE__)
 
 void getMemInfo(size_t* free, size_t* total) {
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         cudaMemGetInfo(free, total);
     }
 }
@@ -34,7 +35,7 @@ void* mallocHost(size_t size) {
         return nullptr;
     }
     void* ptr = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMallocHost(&ptr, size));
     } else {
         ptr = malloc(size);
@@ -49,7 +50,7 @@ void* mallocHost(size_t size, uint flags) {
         return nullptr;
     }
     void* ptr = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaHostAlloc(&ptr, size, flags));
     } else {
         ptr = malloc(size);
@@ -77,7 +78,7 @@ void freeHost(void* ptr) {
     if (!ptr) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFreeHost(ptr));
     } else {
         free(ptr);
@@ -89,7 +90,7 @@ void* mallocManaged(size_t size) {
         return nullptr;
     }
     void* ptr = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMallocManaged(&ptr, size));
         cudaMemCheckManaged(ptr);
     }
@@ -105,7 +106,7 @@ void freeManaged(void* ptr) {
     if (!ptr) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFree(ptr));
     }
 }
@@ -115,7 +116,7 @@ void* mallocDevice(size_t size) {
         return nullptr;
     }
     void* ptr = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMalloc(&ptr, size));
         cudaMemCheckDevice(ptr);
         deviceMemset(ptr, 0, size);
@@ -141,14 +142,14 @@ void freeDevice(void* ptr) {
     if (!ptr) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFree(ptr));
     }
 }
 
 void* mallocPitch(size_t* pitch, size_t width, size_t height) {
     void* ptr = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMallocPitch(&ptr, pitch, width, height));
         cudaMemCheckPitch(ptr);
         deviceMemset2D(ptr, *pitch, 0, width, height);
@@ -169,7 +170,7 @@ void freePitch(void* ptr) {
     if (!ptr) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFree(ptr));
     }
 }
@@ -177,7 +178,7 @@ void freePitch(void* ptr) {
 cudaPitchedPtr malloc3D(cudaExtent extent) {
     cudaPitchedPtr ptr;
     memset(&ptr, 0, sizeof(ptr));
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMalloc3D(&ptr, extent));
         cudaMemCheck3D(ptr.ptr);
         deviceMemset3D(ptr, 0, extent);
@@ -197,7 +198,7 @@ void free3D(cudaPitchedPtr ptr) {
     if (!ptr.ptr) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFree(ptr.ptr));
     }
 }
@@ -208,7 +209,7 @@ cudaArray_t mallocArray(const cudaChannelFormatDesc* desc, size_t width,
         return nullptr;
     }
     cudaArray_t array = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMallocArray(&array, desc, width, height, flags));
         cudaMemCheckArray(array);
     }
@@ -228,7 +229,7 @@ void freeArray(cudaArray_t array) {
     if (!array) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFreeArray(array));
     }
 }
@@ -238,7 +239,7 @@ cudaArray_t malloc3DArray(const cudaChannelFormatDesc* desc, cudaExtent extent, 
         return nullptr;
     }
     cudaArray_t array = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMalloc3DArray(&array, desc, extent, flags));
         cudaMemCheck3DArray(array);
     }
@@ -257,7 +258,7 @@ void free3DArray(cudaArray_t array) {
     if (!array) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFreeArray(array));
     }
 }
@@ -268,7 +269,7 @@ cudaMipmappedArray_t mallocMipmappedArray
         return nullptr;
     }
     cudaMipmappedArray_t mipmappedArray = nullptr;
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMallocMipmappedArray(&mipmappedArray, desc, extent,
                                                 numLevels, flags));
         cudaMemCheckMipmappedArray(mipmappedArray);
@@ -290,7 +291,7 @@ void freeMipmappedArray(cudaMipmappedArray_t mipmappedArray) {
     if (!mipmappedArray) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaFreeMipmappedArray(mipmappedArray));
     }
 }
@@ -314,7 +315,7 @@ void moveHostToHost(void* dst, const void* src, size_t count) {
     if (!dst || !src) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMemcpy(dst, src, count, cudaMemcpyHostToHost));
     } else {
         memcpy(dst, src, count);
@@ -322,21 +323,21 @@ void moveHostToHost(void* dst, const void* src, size_t count) {
 }
 
 void moveHostToDevice(void* dst, const void* src, size_t count) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice));
 }
 
 void moveDeviceToHost(void* dst, const void* src, size_t count) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost));
 }
 
 void moveDeviceToDevice(void* dst, const void* src, size_t count) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice));
@@ -347,7 +348,7 @@ void moveHostToHostAsync
     if (!dst || !src) {
         return;
     }
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         checkCudaError(cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToHost));
     } else {
         memcpy(dst, src, count);
@@ -356,7 +357,7 @@ void moveHostToHostAsync
 
 void moveHostToDeviceAsync
     (void* dst, const void* src, size_t count, cudaStream_t stream) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice, stream));
@@ -364,7 +365,7 @@ void moveHostToDeviceAsync
 
 void moveDeviceToHostAsync
     (void* dst, const void* src, size_t count, cudaStream_t stream) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToHost, stream));
@@ -372,7 +373,7 @@ void moveDeviceToHostAsync
 
 void moveDeviceToDeviceAsync
     (void* dst, const void* src, size_t count, cudaStream_t stream) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpyAsync(dst, src, count, cudaMemcpyDeviceToDevice, stream));
@@ -380,7 +381,7 @@ void moveDeviceToDeviceAsync
 
 void moveHostToHost2D
     (void* dst, size_t dpitch, const void* src, size_t spitch, size_t width, size_t height) {
-    if (!useCuda || !dst || !src) {
+    if (!Ctx->isCreated() || !dst || !src) {
         return;
     }
     checkCudaError(cudaMemcpy2D(dst, dpitch, src, spitch, width, height, cudaMemcpyHostToHost));
@@ -426,7 +427,7 @@ void moveDeviceToDevice2DAsync
 }
 
 void moveHostToSymbol(const void* symbol, const void* src, size_t count, size_t offset) {
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         if (!symbol) {
             std::cerr << "Invalid symbol" << std::endl;
             return;
@@ -440,21 +441,21 @@ void moveHostToSymbol(const void* symbol, const void* src, size_t count, size_t 
 }
 
 void deviceMemset(void* ptr, int value, size_t count) {
-    if (!useCuda || !ptr) {
+    if (!Ctx->isCreated() || !ptr) {
         return;
     }
     checkCudaError(cudaMemset(ptr, value, count));
 }
 
 void deviceMemset2D(void* ptr, size_t pitch, int value, size_t width, size_t height) {
-    if (!useCuda || !ptr) {
+    if (!Ctx->isCreated() || !ptr) {
         return;
     }
     checkCudaError(cudaMemset2D(ptr, pitch, value, width, height));
 }
 
 void deviceMemset3D(cudaPitchedPtr ptr, int value, cudaExtent extent) {
-    if (!useCuda || !ptr.ptr) {
+    if (!Ctx->isCreated() || !ptr.ptr) {
         return;
     }
     checkCudaError(cudaMemset3D(ptr, value, extent));
@@ -462,7 +463,7 @@ void deviceMemset3D(cudaPitchedPtr ptr, int value, cudaExtent extent) {
 
 void deviceMemsetAsync
     (void* ptr, int value, size_t count, cudaStream_t stream) {
-    if (!useCuda || !ptr) {
+    if (!Ctx->isCreated() || !ptr) {
         return;
     }
     checkCudaError(cudaMemsetAsync(ptr, value, count, stream));
@@ -470,7 +471,7 @@ void deviceMemsetAsync
 
 void deviceMemset2DAsync
     (void* ptr, size_t pitch, int value, size_t width, size_t height, cudaStream_t stream) {
-    if (!useCuda || !ptr) {
+    if (!Ctx->isCreated() || !ptr) {
         return;
     }
     checkCudaError(cudaMemset2DAsync(ptr, pitch, value, width, height, stream));
@@ -478,7 +479,7 @@ void deviceMemset2DAsync
 
 void deviceMemset3DAsync
     (cudaPitchedPtr ptr, int value, cudaExtent extent, cudaStream_t stream) {
-    if (!useCuda || !ptr.ptr) {
+    if (!Ctx->isCreated() || !ptr.ptr) {
         return;
     }
     checkCudaError(cudaMemset3DAsync(ptr, value, extent, stream));

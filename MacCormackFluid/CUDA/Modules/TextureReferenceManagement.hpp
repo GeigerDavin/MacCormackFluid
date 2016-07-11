@@ -1,7 +1,7 @@
 #ifndef CUDA_TEXTURE_REFERENCE_MANAGEMENT_HPP
 #define CUDA_TEXTURE_REFERENCE_MANAGEMENT_HPP
 
-#include "DeviceManagement.hpp"
+#include "../CudaDeviceContext.hpp"
 
 namespace CUDA {
 namespace TextureReferenceManagement {
@@ -30,7 +30,7 @@ void bindTextureToMipmappedArray(const textureReference* tex,
 
 template <class T>
 cudaChannelFormatDesc createChannelDesc() {
-    if (useCuda) {
+    if (Ctx->isCreated()) {
         return cudaCreateChannelDesc<T>();
     }
     return cudaChannelFormatDesc(); // ? Replace with pointer ?

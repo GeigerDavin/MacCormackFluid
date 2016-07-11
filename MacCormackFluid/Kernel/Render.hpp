@@ -16,7 +16,8 @@ DINLINE float4 mul(const float4x4& m, const float4& v) {
     r.x = dot(v, m.m[0]);
     r.y = dot(v, m.m[1]);
     r.z = dot(v, m.m[2]);
-    r.w = 1.0f;
+    //r.w = dot(v, m.m[3]);
+    r.w = 0.0f;
     return r;
 }
 
@@ -30,22 +31,26 @@ DINLINE uint rgbaFloatToInt(float4 rgba) {
 
 __global__ static void renderSphere(cudaSurfaceObject_t speedIn,
                                     cudaSurfaceObject_t speedOut) {
-    TID;
-    if (tid.x >= deviceConstant.volumeSize.x) {
-        return;
-    }
+    TID_CONST;
+    float3 eye = make_float3(0, 0, 4);
+    float rayX = 2 * g.mouse.x;
+    float rayY = 2 * g.mouse.y;
+//    rayX -= (float) 1280;
+//    rayY -= (float) 720;
+//    float viewPort = fminf(1280, 720);
 
-    float3 eye = make_float3(0.0f, 0.0f, 4.0f);
-    float testX = 2 * deviceConstant.mouse.x;
-    float testY = 2 * deviceConstant.mouse.y;
-    testX -= (float) deviceConstant.viewPort.x;
-    testY -= (float) deviceConstant.viewPort.y;
-    float bla = fminf(deviceConstant.viewPort.x, deviceConstant.viewPort.y);
-    testX /= bla;
-    testY /= bla;
-    testX *= deviceConstant.zoom;
-    testY *= deviceConstant.zoom;
-    float3 rayDir = make_float3(testX, testY, 0) - eye;
+    rayX -= (float) g.viewPort.x;
+    rayY -= (float) g.viewPort.y;
+    float viewPort = fminf(g.viewPort.x, g.viewPort.y);
+    rayX /= viewPort;
+    rayY /= viewPort;
+    rayX *= g.zoom;
+    rayY *= g.zoom;
+    float3 rayDir = make_float3(rayX, rayY, 0) - eye;
+
+    if (tid.x == 0 && tid.y == 0 && tid.z == 0) {
+    	//printf("%u\n", g.viewPort.x);
+    }
 
     float3 viewDir = 0 - eye;
 
@@ -53,13 +58,13 @@ __global__ static void renderSphere(cudaSurfaceObject_t speedIn,
 
     float3 ball = eye + t * rayDir;
 
-    ball = mul(deviceConstant.rotation, ball);
-    float4 force = mul(deviceConstant.rotation, deviceConstant.dragDirection) * deviceConstant.zoom * 4;
+    ball = mul(g.rotation, ball);
+    float4 force = mul(g.rotation, g.dragDirection) * g.zoom * 4;
 
     // Texture coordinates of intersection
-    ball.x = deviceConstant.volumeSize.x * (ball.x + 1) / 2;
-    ball.y = deviceConstant.volumeSize.y * (ball.y + 1) / 2;
-    ball.z = deviceConstant.volumeSize.z * (ball.z + 1) / 2;
+    ball.x = volumeSizeDev.x * (ball.x + 1) / 2;
+    ball.y = volumeSizeDev.y * (ball.y + 1) / 2;
+    ball.z = volumeSizeDev.z * (ball.z + 1) / 2;
 
     // Volume coordinates relative to sphere center
     ball.x = tid.x - ball.x;
@@ -69,35 +74,44 @@ __global__ static void renderSphere(cudaSurfaceObject_t speedIn,
     float r = dot(ball, ball); // Radius^2 square
 
     // Draw sphere
-    float g = exp(-r / (deviceConstant.mouse.w * deviceConstant.mouse.w));
-    float4 speed = surf3Dread<float4>(speedIn, tid.x * sizeof(float4), tid.y, tid.z);
+    float scale = exp(-r / (g.mouse.w * g.mouse.w));
 
-    float4 sphere = make_float4(speed.x + force.x * g,
-                                speed.y + force.y * g,
-                                speed.z + force.z * g,
-                                speed.w + length(force) * g);
+    float4 speed = surf3Dread<float4>(speedIn, tid.x * sizeof(float4), tid.y, tid.z, CUDA_BOUNDARY_MODE);
 
-    surf3Dwrite(sphere, speedOut, tid.x * sizeof(float4), tid.y, tid.z);
+    float4 sphere = make_float4(speed.x + force.x * scale,
+                                speed.y + force.y * scale,
+                                speed.z + force.z * scale,
+                                speed.w + length(force) * scale);
+
+//    if (sphere.w > 0) {
+//    	printf("%f\n", sphere.w);
+//    }
+//
+//    if (sphere.w > 0.1f) {
+//    	printf("%.16f \r", sphere.w);
+//    }
+
+    surf3Dwrite(sphere, speedOut, tid.x * sizeof(float4), tid.y, tid.z, CUDA_BOUNDARY_MODE);
 }
 
 __global__ static void renderVolume(cudaTextureObject_t speedSizeInTex,
                                     uint* viewOutput)
 {
-    TID;
+    TID_CONST;
     float3 eye = make_float3(0, 0, 4);
-    float testX = 2 * tid.x;
-    float testY = 2 * tid.y;
-    testX -= deviceConstant.viewPort.x;
-    testY -= deviceConstant.viewPort.y;
-    uint bla = min(deviceConstant.viewPort.x, deviceConstant.viewPort.y);
-    testX /= bla;
-    testY /= bla;
-    testX *= deviceConstant.zoom;
-    testY *= deviceConstant.zoom;
-    float3 rayDir = make_float3(testX, testY, 0) - eye;
+    float rayX = 2 * tid.x;
+    float rayY = 2 * tid.y;
+    rayX -= g.viewPort.x;
+    rayY -= g.viewPort.y;
+    uint viewPort = min(g.viewPort.x, g.viewPort.y);
+    rayX /= viewPort;
+    rayY /= viewPort;
+    rayX *= g.zoom;
+    rayY *= g.zoom;
+    float3 rayDir = make_float3(rayX, rayY, 0) - eye;
 
-    eye = mul(deviceConstant.rotation, eye);
-    rayDir = mul(deviceConstant.rotation, rayDir);
+    eye = mul(g.rotation, eye);
+    rayDir = mul(g.rotation, rayDir);
 
     float3 t1 = fmaxf(((-1 - eye) / rayDir), make_float3(0, 0, 0));
     float3 t2 = fmaxf(((1 - eye) / rayDir), make_float3(0, 0, 0));
@@ -111,7 +125,7 @@ __global__ static void renderVolume(cudaTextureObject_t speedSizeInTex,
     float3 texf = (eye + tfront * rayDir + 1) / 2;
     float3 texb = (eye + tback * rayDir + 1) / 2;
 
-    float steps = floor(length(texf - texb) * deviceConstant.volumeSize.x + 0.5f);
+    float steps = floor(length(texf - texb) * volumeSizeDev.x + 0.5f);
 
     float3 texDir = (texb - texf) / steps;
 
@@ -124,16 +138,9 @@ __global__ static void renderVolume(cudaTextureObject_t speedSizeInTex,
         m = fmaxf(m, s);
     }
 
-    float4 color = (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(1.41f, 1.41f, 1.0f, 1.41f), m / 3.0f));
-    //float4 color = (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(0.0f, 1.41f, 1.0f, 1.41f), m / 3.0f));
+    float4 color = (lerp(make_float4(0.0f, -1.41f, -3.0f, -0.4f), make_float4(1.41f, 1.41f+workerId, 1.0f, 1.41f), m / 3.0f));
 
-    //float4 color = make_float4(0.1,0.2,0.3,0.1);
-
-#if USE_TEXTURE_2D
-    surf2Dwrite(color, viewOutput, tid.x * sizeof(float4), tid.y);
-#else
-    viewOutput[tid.y * deviceConstant.viewPort.x + tid.x] = rgbaFloatToInt(color);
-#endif
+    viewOutput[tid.y * g.viewPort.x + tid.x] = rgbaFloatToInt(color);
 }
 
 } // namespace Kernel
